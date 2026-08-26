@@ -1,26 +1,162 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: oklch(98.5% 0.004 258);
+  --surface: #ffffff;
+  --foreground: oklch(22% 0.02 258);
+  --muted: oklch(48% 0.015 258);
+  --muted-soft: oklch(62% 0.012 258);
+  --border: oklch(90% 0.008 258);
+  --border-soft: oklch(94% 0.006 258);
+  --primary: #0a7cff;
+  --primary-dark: #0066d6;
+  --primary-soft: oklch(94% 0.04 250);
+  --primary-softer: oklch(96% 0.01 250);
+  --accent-soft: oklch(97% 0.004 258);
+  --sale: oklch(55% 0.17 25);
+  --success: oklch(56% 0.14 152);
+  --success-soft: oklch(94% 0.045 152);
+  --success-dark: oklch(45% 0.13 152);
+  --warning-soft: oklch(95% 0.03 80);
+  --warning: oklch(50% 0.13 80);
+  --danger-soft: oklch(95% 0.03 25);
+  --body-text: oklch(38% 0.02 258);
+  --hero-stripe-a: oklch(93% 0.008 258);
+  --hero-stripe-b: oklch(97% 0.004 258);
+}
+
+.dark {
+  --background: oklch(16% 0.02 258);
+  --surface: oklch(20% 0.02 258);
+  --foreground: oklch(96% 0.01 258);
+  --muted: oklch(72% 0.02 258);
+  --muted-soft: oklch(62% 0.015 258);
+  --border: oklch(32% 0.02 258);
+  --border-soft: oklch(28% 0.015 258);
+  --primary: #3d9bff;
+  --primary-dark: #0a7cff;
+  --primary-soft: oklch(28% 0.06 250);
+  --primary-softer: oklch(24% 0.03 250);
+  --accent-soft: oklch(22% 0.02 258);
+  --sale: oklch(65% 0.18 25);
+  --success: oklch(70% 0.14 152);
+  --success-soft: oklch(28% 0.05 152);
+  --success-dark: oklch(78% 0.12 152);
+  --warning-soft: oklch(30% 0.05 80);
+  --warning: oklch(78% 0.12 80);
+  --danger-soft: oklch(28% 0.05 25);
+  --body-text: oklch(78% 0.02 258);
+  --hero-stripe-a: oklch(26% 0.02 258);
+  --hero-stripe-b: oklch(22% 0.015 258);
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-soft: var(--muted-soft);
+  --color-border: var(--border);
+  --color-border-soft: var(--border-soft);
+  --color-primary: var(--primary);
+  --color-primary-dark: var(--primary-dark);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-softer: var(--primary-softer);
+  --color-accent-soft: var(--accent-soft);
+  --color-sale: var(--sale);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-success-dark: var(--success-dark);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning: var(--warning);
+  --color-danger-soft: var(--danger-soft);
+  --color-body-text: var(--body-text);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Helvetica Neue",
+    Helvetica, Arial, sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+::selection {
+  background: color-mix(in oklch, var(--primary) 35%, transparent);
+}
+
+a {
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.stripe-bg {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--hero-stripe-a),
+    var(--hero-stripe-a) 10px,
+    var(--hero-stripe-b) 10px,
+    var(--hero-stripe-b) 20px
+  );
+}
+
+@keyframes rj-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes rj-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes rj-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(2%, -1.5%, 0) scale(1.03);
+  }
+}
+
+.rj-fade-up {
+  animation: rj-fade-up 0.7s ease-out both;
+}
+
+.rj-fade-up-delay {
+  animation: rj-fade-up 0.7s ease-out 0.15s both;
+}
+
+.rj-fade-up-delay-2 {
+  animation: rj-fade-up 0.7s ease-out 0.3s both;
+}
+
+.rj-hero-glow {
+  animation: rj-drift 14s ease-in-out infinite;
+}
+
+.rj-fade-in {
+  animation: rj-fade-in 0.9s ease-out both;
 }

@@ -1,0 +1,233 @@
+import type { CategoryId, Order, OrderItem, OrderStatus, Product } from "@/lib/products";
+import { formatPrice, type CurrencyCode } from "@/lib/format";
+
+export type ProductRow = {
+  id: number;
+  name: string;
+  brand: string;
+  category: string;
+  price: number | string;
+  old_price: number | string | null;
+  stock: number;
+  rating: number | string;
+  reviews: number;
+  installments: string;
+  description: string;
+  tags: string[] | null;
+  image_url: string | null;
+};
+
+export type ProviderRow = {
+  id: string;
+  name: string;
+  contact: string;
+  email: string;
+  phone: string;
+  address: string;
+  notes: string;
+};
+
+export type StoreConfigRow = {
+  id: number;
+  store_name: string;
+  tagline: string;
+  support_email: string;
+  support_phone: string;
+  currency: string;
+  free_shipping_from: number | string;
+  shipping_cost: number | string;
+  installments_enabled: boolean;
+  max_installments: number;
+  announcement: string;
+};
+
+export type ProfileRow = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  dni: string;
+};
+
+export type AddressRow = {
+  id: string;
+  user_id: string;
+  label: string;
+  street: string;
+  city: string;
+  province: string;
+  zip: string;
+  phone: string;
+};
+
+export type OrderRow = {
+  id: string;
+  order_number: string;
+  status: string;
+  subtotal: number | string;
+  shipping: number | string;
+  total: number | string;
+  payment: string;
+  address: string;
+  created_at: string;
+};
+
+export type OrderItemRow = {
+  id: string;
+  order_id: string;
+  product_id: number | null;
+  name: string;
+  qty: number;
+  unit_price: number | string;
+  line_total: number | string;
+};
+
+function num(v: number | string | null | undefined): number {
+  if (v == null) return 0;
+  return typeof v === "number" ? v : Number(v);
+}
+
+export function mapProduct(row: ProductRow): Product {
+  return {
+    id: Number(row.id),
+    name: row.name,
+    brand: row.brand,
+    category: row.category as CategoryId,
+    price: num(row.price),
+    oldPrice: row.old_price == null ? null : num(row.old_price),
+    stock: row.stock,
+    rating: num(row.rating),
+    reviews: row.reviews,
+    installments: row.installments,
+    description: row.description,
+    tags: row.tags ?? [],
+    imageUrl: row.image_url ?? null,
+  };
+}
+
+export function toProductInsert(input: {
+  name: string;
+  brand: string;
+  category: CategoryId;
+  price: number;
+  oldPrice: number | null;
+  stock: number;
+  rating?: number;
+  reviews?: number;
+  installments: string;
+  description: string;
+  tags?: string[];
+  imageUrl?: string | null;
+}) {
+  return {
+    name: input.name,
+    brand: input.brand,
+    category: input.category,
+    price: input.price,
+    old_price: input.oldPrice,
+    stock: input.stock,
+    rating: input.rating ?? 4.5,
+    reviews: input.reviews ?? 0,
+    installments: input.installments,
+    description: input.description,
+    tags: input.tags ?? [],
+    image_url: input.imageUrl ?? null,
+  };
+}
+
+export function mapProvider(row: ProviderRow) {
+  return {
+    id: row.id,
+    name: row.name,
+    contact: row.contact,
+    email: row.email,
+    phone: row.phone,
+    address: row.address,
+    notes: row.notes,
+  };
+}
+
+export function mapStoreConfig(row: StoreConfigRow) {
+  return {
+    storeName: row.store_name,
+    tagline: row.tagline,
+    supportEmail: row.support_email,
+    supportPhone: row.support_phone,
+    currency: (row.currency === "USD" ? "USD" : "ARS") as CurrencyCode,
+    freeShippingFrom: num(row.free_shipping_from),
+    shippingCost: num(row.shipping_cost),
+    installmentsEnabled: row.installments_enabled,
+    maxInstallments: row.max_installments,
+    announcement: row.announcement,
+  };
+}
+
+export function toStoreConfigUpdate(config: ReturnType<typeof mapStoreConfig>) {
+  return {
+    store_name: config.storeName,
+    tagline: config.tagline,
+    support_email: config.supportEmail,
+    support_phone: config.supportPhone,
+    currency: config.currency,
+    free_shipping_from: config.freeShippingFrom,
+    shipping_cost: config.shippingCost,
+    installments_enabled: config.installmentsEnabled,
+    max_installments: config.maxInstallments,
+    announcement: config.announcement,
+    updated_at: new Date().toISOString(),
+  };
+}
+
+export function mapProfile(row: ProfileRow) {
+  return {
+    name: row.name,
+    email: row.email,
+    phone: row.phone,
+    dni: row.dni,
+  };
+}
+
+export function mapAddress(row: AddressRow) {
+  return {
+    id: row.id,
+    label: row.label,
+    street: row.street,
+    city: row.city,
+    province: row.province,
+    zip: row.zip,
+    phone: row.phone,
+  };
+}
+
+export function mapOrder(
+  row: OrderRow,
+  items: OrderItemRow[],
+  currency: CurrencyCode = "ARS",
+): Order {
+  const mappedItems: OrderItem[] = items.map((i) => ({
+    name: i.name,
+    qty: i.qty,
+    unitPrice: formatPrice(num(i.unit_price), currency),
+    lineTotal: formatPrice(num(i.line_total), currency),
+  }));
+
+  const shippingNum = num(row.shipping);
+  const created = new Date(row.created_at);
+  const date = created.toLocaleDateString("es-AR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+
+  return {
+    id: row.order_number,
+    date,
+    status: row.status as OrderStatus,
+    total: formatPrice(num(row.total), currency),
+    subtotal: formatPrice(num(row.subtotal), currency),
+    shipping: shippingNum === 0 ? "Gratis" : formatPrice(shippingNum, currency),
+    payment: row.payment,
+    address: row.address,
+    items: mappedItems,
+  };
+}
