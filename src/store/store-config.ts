@@ -36,7 +36,7 @@ const defaultConfig: StoreConfig = {
   tagline: "Tecnología • Innovación • Tu mundo",
   supportEmail: "soporte@rjtech.com",
   supportPhone: "+54 11 4000-1234",
-  currency: "ARS",
+  currency: "USD",
   freeShippingFrom: 500000,
   shippingCost: 15000,
   installmentsEnabled: true,

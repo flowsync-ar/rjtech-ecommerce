@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { ProductCard } from "@/components/ProductCard";
-import { ProductImage } from "@/components/ProductImage";
+import { ProductGallery } from "@/components/ProductGallery";
 import { QuantitySelector } from "@/components/QuantitySelector";
 import { productMeta, starsFor } from "@/lib/format";
 import {
@@ -66,22 +66,7 @@ export default function ProductoPage() {
 
       <div className="grid grid-cols-1 gap-12 py-6 lg:grid-cols-[1fr_420px]">
         <div>
-          <ProductImage
-            product={product}
-            className="mb-3 h-[320px] rounded-[14px] text-xs md:h-[420px]"
-            sizes="(max-width: 1024px) 100vw, 60vw"
-            priority
-          />
-          <div className="grid grid-cols-4 gap-3">
-            {[0, 1, 2, 3].map((n) => (
-              <ProductImage
-                key={n}
-                product={product}
-                className="h-[90px] rounded-[10px] border border-border"
-                sizes="120px"
-              />
-            ))}
-          </div>
+          <ProductGallery product={product} />
         </div>
 
         <div>

@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { AdminLogin } from "@/components/admin/AdminLogin";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { useAdminStore } from "@/store/admin-store";
+import { useBrandsStore } from "@/store/brands-store";
+import { useCategoriesStore } from "@/store/categories-store";
 import { useProvidersStore } from "@/store/providers-store";
 
 export function AdminGate({ children }: { children: React.ReactNode }) {
@@ -11,6 +13,8 @@ export function AdminGate({ children }: { children: React.ReactNode }) {
   const hydrated = useAdminStore((s) => s.hydrated);
   const init = useAdminStore((s) => s.init);
   const fetchProviders = useProvidersStore((s) => s.fetchProviders);
+  const fetchBrands = useBrandsStore((s) => s.fetchBrands);
+  const fetchCategories = useCategoriesStore((s) => s.fetchCategories);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -19,8 +23,11 @@ export function AdminGate({ children }: { children: React.ReactNode }) {
   }, [init]);
 
   useEffect(() => {
-    if (isAuthenticated) void fetchProviders();
-  }, [isAuthenticated, fetchProviders]);
+    if (!isAuthenticated) return;
+    void fetchProviders();
+    void fetchBrands();
+    void fetchCategories();
+  }, [isAuthenticated, fetchProviders, fetchBrands, fetchCategories]);
 
   if (!mounted || !hydrated) {
     return (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useDialog } from "@/components/DialogProvider";
 import {
   useProvidersStore,
   type Provider,
@@ -19,6 +20,7 @@ const emptyForm = {
 };
 
 export default function AdminProveedoresPage() {
+  const { confirm, notice } = useDialog();
   const providers = useProvidersStore((s) => s.providers);
   const addProvider = useProvidersStore((s) => s.addProvider);
   const updateProvider = useProvidersStore((s) => s.updateProvider);
@@ -78,7 +80,10 @@ export default function AdminProveedoresPage() {
       setEditing(null);
       setForm(emptyForm);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error al guardar");
+      void notice({
+        title: "No se pudo guardar",
+        message: err instanceof Error ? err.message : "Error al guardar",
+      });
     }
   };
 
@@ -208,11 +213,24 @@ export default function AdminProveedoresPage() {
               <button
                 type="button"
                 onClick={() => {
-                  if (confirm(`¿Eliminar ${p.name}?`)) {
-                    void deleteProvider(p.id).catch((err) =>
-                      alert(err instanceof Error ? err.message : "Error"),
-                    );
-                  }
+                  void (async () => {
+                    const ok = await confirm({
+                      title: "Eliminar proveedor",
+                      message: `¿Eliminar “${p.name}”? Esta acción no se puede deshacer.`,
+                      confirmLabel: "Eliminar",
+                      tone: "danger",
+                    });
+                    if (!ok) return;
+                    try {
+                      await deleteProvider(p.id);
+                    } catch (err) {
+                      void notice({
+                        title: "No se pudo eliminar",
+                        message:
+                          err instanceof Error ? err.message : "Error",
+                      });
+                    }
+                  })();
                 }}
                 className="cursor-pointer rounded-md border-none bg-transparent px-3 py-1.5 text-[12.5px] font-semibold text-sale"
               >

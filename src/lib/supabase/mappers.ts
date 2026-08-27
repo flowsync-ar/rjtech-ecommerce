@@ -6,6 +6,9 @@ export type ProductRow = {
   name: string;
   brand: string;
   category: string;
+  subcategory: string | null;
+  provider: string | null;
+  cost_price: number | string | null;
   price: number | string;
   old_price: number | string | null;
   stock: number;
@@ -15,6 +18,9 @@ export type ProductRow = {
   description: string;
   tags: string[] | null;
   image_url: string | null;
+  image_urls: string[] | null;
+  active: boolean | null;
+  featured: boolean | null;
 };
 
 export type ProviderRow = {
@@ -93,6 +99,9 @@ export function mapProduct(row: ProductRow): Product {
     name: row.name,
     brand: row.brand,
     category: row.category as CategoryId,
+    subcategory: row.subcategory ?? "",
+    provider: row.provider ?? "",
+    costPrice: row.cost_price == null ? null : num(row.cost_price),
     price: num(row.price),
     oldPrice: row.old_price == null ? null : num(row.old_price),
     stock: row.stock,
@@ -101,7 +110,16 @@ export function mapProduct(row: ProductRow): Product {
     installments: row.installments,
     description: row.description,
     tags: row.tags ?? [],
-    imageUrl: row.image_url ?? null,
+    imageUrl:
+      row.image_url ??
+      (row.image_urls && row.image_urls.length > 0 ? row.image_urls[0] : null),
+    imageUrls: (() => {
+      const list = (row.image_urls ?? []).filter(Boolean);
+      if (list.length > 0) return [...new Set(list)];
+      return row.image_url ? [row.image_url] : [];
+    })(),
+    active: row.active ?? true,
+    featured: row.featured ?? false,
   };
 }
 
@@ -109,6 +127,9 @@ export function toProductInsert(input: {
   name: string;
   brand: string;
   category: CategoryId;
+  subcategory?: string;
+  provider?: string;
+  costPrice?: number | null;
   price: number;
   oldPrice: number | null;
   stock: number;
@@ -118,11 +139,27 @@ export function toProductInsert(input: {
   description: string;
   tags?: string[];
   imageUrl?: string | null;
+  imageUrls?: string[];
+  active?: boolean;
+  featured?: boolean;
 }) {
+  const urls = [
+    ...new Set(
+      (input.imageUrls?.length
+        ? input.imageUrls
+        : input.imageUrl
+          ? [input.imageUrl]
+          : []
+      ).filter(Boolean),
+    ),
+  ];
   return {
     name: input.name,
     brand: input.brand,
     category: input.category,
+    subcategory: input.subcategory ?? "",
+    provider: input.provider ?? "",
+    cost_price: input.costPrice ?? null,
     price: input.price,
     old_price: input.oldPrice,
     stock: input.stock,
@@ -131,7 +168,10 @@ export function toProductInsert(input: {
     installments: input.installments,
     description: input.description,
     tags: input.tags ?? [],
-    image_url: input.imageUrl ?? null,
+    image_url: urls[0] ?? null,
+    image_urls: urls,
+    active: input.active ?? true,
+    featured: input.featured ?? false,
   };
 }
 
@@ -153,7 +193,7 @@ export function mapStoreConfig(row: StoreConfigRow) {
     tagline: row.tagline,
     supportEmail: row.support_email,
     supportPhone: row.support_phone,
-    currency: (row.currency === "USD" ? "USD" : "ARS") as CurrencyCode,
+    currency: (row.currency === "ARS" ? "ARS" : "USD") as CurrencyCode,
     freeShippingFrom: num(row.free_shipping_from),
     shippingCost: num(row.shipping_cost),
     installmentsEnabled: row.installments_enabled,
@@ -202,7 +242,7 @@ export function mapAddress(row: AddressRow) {
 export function mapOrder(
   row: OrderRow,
   items: OrderItemRow[],
-  currency: CurrencyCode = "ARS",
+  currency: CurrencyCode = "USD",
 ): Order {
   const mappedItems: OrderItem[] = items.map((i) => ({
     name: i.name,

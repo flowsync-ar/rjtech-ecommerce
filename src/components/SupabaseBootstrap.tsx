@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect } from "react";
-import type { User } from "@supabase/supabase-js";
-import { isRjtechAdmin } from "@/lib/auth-helpers";
+import { useAccountProfileStore } from "@/store/account-profile-store";
+import { useBrandsStore } from "@/store/brands-store";
+import { useCartStore } from "@/store/cart-store";
+import { useCatalogStore } from "@/store/catalog-store";
+import { useCategoriesStore } from "@/store/categories-store";
+import { useStoreConfig } from "@/store/store-config";
 import { onAuthSessionChange, useAuthStore } from "@/store/auth-store";
 import { useAdminStore } from "@/store/admin-store";
-import { useCatalogStore } from "@/store/catalog-store";
-import { useStoreConfig } from "@/store/store-config";
-import { useAccountProfileStore } from "@/store/account-profile-store";
-import { useCartStore } from "@/store/cart-store";
+import { isRjtechAdmin } from "@/lib/auth-helpers";
+import type { User } from "@supabase/supabase-js";
+import { useEffect } from "react";
 
 function handleSession(user: User | null) {
   useAdminStore
@@ -29,6 +31,8 @@ export function SupabaseBootstrap() {
   useEffect(() => {
     void fetchProducts();
     void fetchConfig();
+    void useBrandsStore.getState().fetchBrands();
+    void useCategoriesStore.getState().fetchCategories();
     const unsub = onAuthSessionChange(handleSession);
     void initAuth();
     return unsub;

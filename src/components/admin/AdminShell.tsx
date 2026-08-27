@@ -9,6 +9,8 @@ import { useAdminStore } from "@/store/admin-store";
 const nav = [
   { href: "/admin", label: "Inicio", exact: true },
   { href: "/admin/productos", label: "Productos" },
+  { href: "/admin/marcas", label: "Marcas" },
+  { href: "/admin/categorias", label: "Categorías" },
   { href: "/admin/proveedores", label: "Proveedores" },
   { href: "/admin/configuracion", label: "Configuración" },
 ];

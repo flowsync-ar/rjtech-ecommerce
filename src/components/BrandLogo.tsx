@@ -12,13 +12,13 @@ type Props = {
 
 const sizes = {
   xs: { width: 56, height: 56, className: "h-11 w-11" },
-  sm: { width: 96, height: 96, className: "h-20 w-20" },
+  sm: { width: 80, height: 80, className: "h-16 w-16 md:h-20 md:w-20" },
   md: {
-    width: 180,
-    height: 180,
-    className: "h-[112px] w-[112px] md:h-[128px] md:w-[128px]",
+    width: 120,
+    height: 120,
+    className: "h-[88px] w-[88px] md:h-[104px] md:w-[104px]",
   },
-  lg: { width: 220, height: 220, className: "h-36 w-36" },
+  lg: { width: 180, height: 180, className: "h-36 w-36" },
 };
 
 export function BrandLogo({ size = "md", className = "" }: Props) {
@@ -42,7 +42,7 @@ export function BrandLogo({ size = "md", className = "" }: Props) {
         alt="RJ Tech"
         width={dim.width}
         height={dim.height}
-        className={`${dim.className} rounded-full object-cover`}
+        className={`${dim.className} object-contain`}
         priority
       />
     </Link>

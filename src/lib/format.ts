@@ -4,15 +4,16 @@ import { categoryLabels } from "./products";
 export type CurrencyCode = "ARS" | "USD";
 
 export function normalizeCurrency(value: string | undefined | null): CurrencyCode {
-  return value === "USD" ? "USD" : "ARS";
+  // Default de tienda: US$. Solo ARS si está elegido explícitamente.
+  return value === "ARS" ? "ARS" : "USD";
 }
 
 export function currencyPrefix(currency: CurrencyCode): string {
-  return currency === "USD" ? "US$" : "$";
+  return currency === "ARS" ? "$" : "US$";
 }
 
 export function currencyLabel(currency: CurrencyCode): string {
-  return currency === "USD" ? "Dólares (US$)" : "Pesos ($)";
+  return currency === "ARS" ? "Pesos ($)" : "Dólares (US$)";
 }
 
 /** Entero con separador de miles estilo es-AR (1.234.567). */
@@ -21,7 +22,7 @@ export function formatAmount(n: number): string {
   return safe.toLocaleString("es-AR");
 }
 
-export function formatPrice(n: number, currency: CurrencyCode = "ARS"): string {
+export function formatPrice(n: number, currency: CurrencyCode = "USD"): string {
   return `${currencyPrefix(currency)}${formatAmount(n)}`;
 }
 
@@ -59,7 +60,7 @@ export function stockInfo(product: Product) {
   };
 }
 
-export function productMeta(product: Product, currency: CurrencyCode = "ARS") {
+export function productMeta(product: Product, currency: CurrencyCode = "USD") {
   const discount = discountPct(product);
   const stock = stockInfo(product);
   return {

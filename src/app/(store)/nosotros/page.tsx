@@ -49,7 +49,7 @@ export default function NosotrosPage() {
         <div>
           <p
             id="historia"
-            className="mb-3 scroll-mt-[144px] text-[13px] font-bold tracking-wider text-primary uppercase md:scroll-mt-[160px]"
+            className="mb-3 scroll-mt-[120px] text-[13px] font-bold tracking-wider text-primary uppercase md:scroll-mt-[136px]"
           >
             Quiénes somos
           </p>

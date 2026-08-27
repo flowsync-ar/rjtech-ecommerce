@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import type { Product } from "@/lib/products";
+import { productImages } from "@/lib/products";
 import { productMeta } from "@/lib/format";
 
 type Props = {
@@ -22,25 +23,31 @@ export function ProductImage({
 }: Props) {
   const meta = productMeta(product);
   const alt = label ?? product.name;
+  const src = productImages(product)[0] ?? null;
 
   return (
     <div
-      className={`stripe-bg relative flex items-center justify-center overflow-hidden font-mono text-[11px] text-muted-soft ${className}`}
+      className={`relative flex items-center justify-center overflow-hidden bg-white font-mono text-[11px] text-muted-soft ${className}`}
     >
       {meta.discountPct != null && (
         <span className="absolute top-2.5 left-2.5 z-10 rounded-md bg-sale px-2 py-0.5 text-[11px] font-bold text-white">
           -{meta.discountPct}%
         </span>
       )}
-      {product.imageUrl ? (
-        <Image
-          src={product.imageUrl}
-          alt={alt}
-          fill
-          priority={priority}
-          sizes={sizes}
-          className="object-cover"
-        />
+      {src ? (
+        <span className="absolute inset-2">
+          <span className="relative block h-full w-full">
+            <Image
+              src={src}
+              alt={alt}
+              fill
+              priority={priority}
+              sizes={sizes}
+              className="object-contain object-center"
+              style={{ objectFit: "contain", objectPosition: "center" }}
+            />
+          </span>
+        </span>
       ) : (
         <span className="px-2 text-center">foto: {alt}</span>
       )}

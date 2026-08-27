@@ -19,15 +19,16 @@ type ProvidersState = {
   loading: boolean;
   hydrated: boolean;
   fetchProviders: () => Promise<void>;
-  addProvider: (input: Omit<Provider, "id">) => Promise<void>;
+  addProvider: (input: Omit<Provider, "id">) => Promise<Provider>;
   updateProvider: (
     id: string,
     input: Partial<Omit<Provider, "id">>,
   ) => Promise<void>;
   deleteProvider: (id: string) => Promise<void>;
+  ensureProvider: (name: string) => Promise<Provider>;
 };
 
-export const useProvidersStore = create<ProvidersState>((set) => ({
+export const useProvidersStore = create<ProvidersState>((set, get) => ({
   providers: [],
   loading: false,
   hydrated: false,
@@ -59,7 +60,12 @@ export const useProvidersStore = create<ProvidersState>((set) => ({
       .single();
     if (error || !data) throw new Error(error?.message ?? "Error al crear");
     const provider = mapProvider(data as ProviderRow);
-    set((s) => ({ providers: [...s.providers, provider] }));
+    set((s) => ({
+      providers: [...s.providers, provider].sort((a, b) =>
+        a.name.localeCompare(b.name, "es"),
+      ),
+    }));
+    return provider;
   },
   updateProvider: async (id, input) => {
     const supabase = createClient();
@@ -80,5 +86,21 @@ export const useProvidersStore = create<ProvidersState>((set) => ({
     const { error } = await supabase.from("rjtech_providers").delete().eq("id", id);
     if (error) throw new Error(error.message);
     set((s) => ({ providers: s.providers.filter((p) => p.id !== id) }));
+  },
+  ensureProvider: async (name) => {
+    const trimmed = name.trim();
+    if (!trimmed) throw new Error("El nombre del proveedor es obligatorio");
+    const existing = get().providers.find(
+      (p) => p.name.toLowerCase() === trimmed.toLowerCase(),
+    );
+    if (existing) return existing;
+    return get().addProvider({
+      name: trimmed,
+      contact: "",
+      email: "",
+      phone: "",
+      address: "",
+      notes: "",
+    });
   },
 }));

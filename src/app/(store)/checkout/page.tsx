@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useDialog } from "@/components/DialogProvider";
 import { OrderSummary } from "@/components/OrderSummary";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useCartStore } from "@/store/cart-store";
@@ -36,6 +37,7 @@ const stepDefs = [
 ];
 
 export default function CheckoutPage() {
+  const { notice } = useDialog();
   const router = useRouter();
   const { formatPrice } = useCurrency();
   const items = useCartStore((s) => s.items);
@@ -247,7 +249,12 @@ export default function CheckoutPage() {
                     type="button"
                     onClick={async () => {
                       const result = await confirmOrder();
-                      if (!result.ok) alert(result.error);
+                      if (!result.ok) {
+                        void notice({
+                          title: "No se pudo confirmar",
+                          message: result.error ?? "Error al confirmar la compra",
+                        });
+                      }
                     }}
                     className="cursor-pointer rounded-[9px] border-none bg-success px-6 py-3.5 text-[14.5px] font-bold text-white"
                   >

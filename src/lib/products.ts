@@ -1,17 +1,12 @@
-export type CategoryId =
-  | "celulares"
-  | "notebooks"
-  | "macbooks"
-  | "videojuego"
-  | "televisores"
-  | "gadgets"
-  | "audio";
-
+export type CategoryId = string;
 export type Product = {
   id: number;
   name: string;
   brand: string;
   category: CategoryId;
+  subcategory: string;
+  provider: string;
+  costPrice: number | null;
   price: number;
   oldPrice: number | null;
   stock: number;
@@ -21,9 +16,13 @@ export type Product = {
   description: string;
   tags: string[];
   imageUrl: string | null;
+  /** Galería completa; imageUrl suele ser la primera. */
+  imageUrls: string[];
+  active: boolean;
+  featured: boolean;
 };
 
-export const categoryLabels: Record<CategoryId, string> = {
+export const categoryLabels: Record<string, string> = {
   celulares: "Celulares",
   notebooks: "Notebooks",
   macbooks: "MacBooks",
@@ -49,8 +48,14 @@ export const products: Product[] = [
     name: 'MacBook Air 15" M3',
     brand: "Apple",
     category: "macbooks",
+    subcategory: "",
+    provider: "",
+    costPrice: null,
     tags: ["apple","macbook","notebook","m3","laptop","ultrabook"],
     imageUrl: null,
+    imageUrls: [],
+    active: true,
+    featured: false,
     price: 1899000,
     oldPrice: null,
     stock: 12,
@@ -65,8 +70,14 @@ export const products: Product[] = [
     name: 'MacBook Pro 14" M4',
     brand: "Apple",
     category: "macbooks",
+    subcategory: "",
+    provider: "",
+    costPrice: null,
     tags: ["apple","macbook","notebook","m4","pro","laptop"],
     imageUrl: null,
+    imageUrls: [],
+    active: true,
+    featured: false,
     price: 2650000,
     oldPrice: null,
     stock: 0,
@@ -81,8 +92,14 @@ export const products: Product[] = [
     name: "iPhone 15 Pro",
     brand: "Apple",
     category: "celulares",
+    subcategory: "",
+    provider: "",
+    costPrice: null,
     tags: ["apple","iphone","celular","5g","pro"],
     imageUrl: null,
+    imageUrls: [],
+    active: true,
+    featured: false,
     price: 1450000,
     oldPrice: 1600000,
     stock: 8,
@@ -97,8 +114,14 @@ export const products: Product[] = [
     name: "Xiaomi Redmi Note 13 Pro",
     brand: "Xiaomi",
     category: "celulares",
+    subcategory: "",
+    provider: "",
+    costPrice: null,
     tags: ["xiaomi","redmi","celular","200mp","amoled"],
     imageUrl: null,
+    imageUrls: [],
+    active: true,
+    featured: false,
     price: 289000,
     oldPrice: null,
     stock: 34,
@@ -113,8 +136,14 @@ export const products: Product[] = [
     name: "Xiaomi Poco X6",
     brand: "Xiaomi",
     category: "celulares",
+    subcategory: "",
+    provider: "",
+    costPrice: null,
     tags: ["xiaomi","poco","celular","gaming","snapdragon"],
     imageUrl: null,
+    imageUrls: [],
+    active: true,
+    featured: false,
     price: 349000,
     oldPrice: 399000,
     stock: 21,
@@ -129,8 +158,14 @@ export const products: Product[] = [
     name: "Motorola Edge 40",
     brand: "Motorola",
     category: "celulares",
+    subcategory: "",
+    provider: "",
+    costPrice: null,
     tags: ["motorola","edge","celular","ip68"],
     imageUrl: null,
+    imageUrls: [],
+    active: true,
+    featured: false,
     price: 399000,
     oldPrice: null,
     stock: 15,
@@ -145,8 +180,14 @@ export const products: Product[] = [
     name: "Notebook Lenovo IdeaPad 15",
     brand: "Lenovo",
     category: "notebooks",
+    subcategory: "",
+    provider: "",
+    costPrice: null,
     tags: ["lenovo","notebook","ideapad","laptop","estudio"],
     imageUrl: null,
+    imageUrls: [],
+    active: true,
+    featured: false,
     price: 789000,
     oldPrice: null,
     stock: 14,
@@ -161,8 +202,14 @@ export const products: Product[] = [
     name: "Consola PlayStation 5 Slim",
     brand: "Sony",
     category: "videojuego",
+    subcategory: "",
+    provider: "",
+    costPrice: null,
     tags: ["sony","playstation","ps5","consola","gaming","videojuego"],
     imageUrl: null,
+    imageUrls: [],
+    active: true,
+    featured: false,
     price: 899000,
     oldPrice: 999000,
     stock: 7,
@@ -177,8 +224,14 @@ export const products: Product[] = [
     name: "Drone Explorer 4K",
     brand: "RJ Tech",
     category: "gadgets",
+    subcategory: "",
+    provider: "",
+    costPrice: null,
     tags: ["drone","4k","gadgets","vuelo"],
     imageUrl: null,
+    imageUrls: [],
+    active: true,
+    featured: false,
     price: 549000,
     oldPrice: null,
     stock: 9,
@@ -193,8 +246,14 @@ export const products: Product[] = [
     name: "Lentes Smart Vision X",
     brand: "RJ Tech",
     category: "gadgets",
+    subcategory: "",
+    provider: "",
+    costPrice: null,
     tags: ["lentes","smart","gadgets","audio","wearable"],
     imageUrl: null,
+    imageUrls: [],
+    active: true,
+    featured: false,
     price: 199000,
     oldPrice: null,
     stock: 25,
@@ -209,8 +268,14 @@ export const products: Product[] = [
     name: 'Smart TV 55" 4K',
     brand: "Samsung",
     category: "televisores",
+    subcategory: "",
+    provider: "",
+    costPrice: null,
     tags: ["samsung","tv","4k","smart tv","televisor"],
     imageUrl: null,
+    imageUrls: [],
+    active: true,
+    featured: false,
     price: 629000,
     oldPrice: 749000,
     stock: 11,
@@ -225,8 +290,14 @@ export const products: Product[] = [
     name: "Audífonos Bluetooth Pro",
     brand: "Sony",
     category: "audio",
+    subcategory: "",
+    provider: "",
+    costPrice: null,
     tags: ["sony","audio","auriculares","bluetooth","anc"],
     imageUrl: null,
+    imageUrls: [],
+    active: true,
+    featured: false,
     price: 89000,
     oldPrice: null,
     stock: 60,
@@ -417,6 +488,13 @@ export function parseTags(input: string): string[] {
         .filter(Boolean),
     ),
   ];
+}
+
+/** URLs de galería (sin duplicados); cae a imageUrl si hace falta. */
+export function productImages(product: Product): string[] {
+  const fromList = (product.imageUrls ?? []).filter(Boolean);
+  if (fromList.length > 0) return [...new Set(fromList)];
+  return product.imageUrl ? [product.imageUrl] : [];
 }
 
 export function productMatchesQuery(product: Product, query: string) {

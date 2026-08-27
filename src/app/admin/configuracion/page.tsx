@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { ComboSelect } from "@/components/ComboSelect";
+import { useDialog } from "@/components/DialogProvider";
 import { MoneyInput } from "@/components/MoneyInput";
 import {
   currencyLabel,
+  currencyPrefix,
   normalizeCurrency,
   type CurrencyCode,
 } from "@/lib/format";
@@ -14,11 +16,12 @@ const inputClass =
   "w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary";
 
 const CURRENCY_OPTIONS: { value: CurrencyCode; label: string }[] = [
-  { value: "ARS", label: currencyLabel("ARS") },
   { value: "USD", label: currencyLabel("USD") },
+  { value: "ARS", label: currencyLabel("ARS") },
 ];
 
 export default function AdminConfigPage() {
+  const { notice } = useDialog();
   const config = useStoreConfig((s) => s.config);
   const updateConfig = useStoreConfig((s) => s.updateConfig);
   const resetConfig = useStoreConfig((s) => s.resetConfig);
@@ -48,7 +51,10 @@ export default function AdminConfigPage() {
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error al guardar");
+      void notice({
+        title: "No se pudo guardar",
+        message: err instanceof Error ? err.message : "Error al guardar",
+      });
     }
   };
 
@@ -129,7 +135,7 @@ export default function AdminConfigPage() {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <MoneyInput
               className={inputClass}
-              placeholder="Envío gratis desde"
+              placeholder={`Envío gratis desde (${currencyPrefix(normalizeCurrency(form.currency))})`}
               currency={normalizeCurrency(form.currency)}
               value={form.freeShippingFrom}
               onChange={(freeShippingFrom) =>
@@ -141,7 +147,7 @@ export default function AdminConfigPage() {
             />
             <MoneyInput
               className={inputClass}
-              placeholder="Costo de envío"
+              placeholder={`Costo de envío (${currencyPrefix(normalizeCurrency(form.currency))})`}
               currency={normalizeCurrency(form.currency)}
               value={form.shippingCost}
               onChange={(shippingCost) =>

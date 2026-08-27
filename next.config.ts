@@ -14,6 +14,12 @@ const nextConfig: NextConfig = {
   images: {
     formats: ["image/webp", "image/avif"],
     remotePatterns: [
+      // Cualquier proyecto Supabase (Storage público)
+      {
+        protocol: "https",
+        hostname: "*.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+      },
       ...(supabaseHost
         ? [
             {

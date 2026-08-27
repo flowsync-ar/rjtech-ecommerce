@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useDialog } from "@/components/DialogProvider";
 import type { Order } from "@/lib/products";
 import type { AuthUser } from "@/store/auth-store";
 import { useAuthStore } from "@/store/auth-store";
@@ -248,6 +249,7 @@ function OrderDetail({
 }
 
 function ProfileSection({ user }: { user: AuthUser }) {
+  const { notice } = useDialog();
   const profile = useAccountProfileStore((s) => s.profile);
   const setProfile = useAccountProfileStore((s) => s.setProfile);
   const [form, setForm] = useState(profile);
@@ -273,7 +275,10 @@ function ProfileSection({ user }: { user: AuthUser }) {
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error al guardar");
+      void notice({
+        title: "No se pudo guardar",
+        message: err instanceof Error ? err.message : "Error al guardar",
+      });
     }
   };
 
@@ -333,6 +338,7 @@ function ProfileSection({ user }: { user: AuthUser }) {
 }
 
 function AddressesSection() {
+  const { confirm, notice } = useDialog();
   const addresses = useAccountProfileStore((s) => s.addresses);
   const addAddress = useAccountProfileStore((s) => s.addAddress);
   const updateAddress = useAccountProfileStore((s) => s.updateAddress);
@@ -387,7 +393,10 @@ function AddressesSection() {
       setEditing(null);
       setForm(emptyForm);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error al guardar");
+      void notice({
+        title: "No se pudo guardar",
+        message: err instanceof Error ? err.message : "Error al guardar",
+      });
     }
   };
 
@@ -503,11 +512,25 @@ function AddressesSection() {
               <button
                 type="button"
                 onClick={() => {
-                  if (confirm("¿Eliminar esta dirección?")) {
-                    void deleteAddress(address.id).catch((err) =>
-                      alert(err instanceof Error ? err.message : "Error"),
-                    );
-                  }
+                  void (async () => {
+                    const ok = await confirm({
+                      title: "Eliminar dirección",
+                      message:
+                        "¿Eliminar esta dirección? Esta acción no se puede deshacer.",
+                      confirmLabel: "Eliminar",
+                      tone: "danger",
+                    });
+                    if (!ok) return;
+                    try {
+                      await deleteAddress(address.id);
+                    } catch (err) {
+                      void notice({
+                        title: "No se pudo eliminar",
+                        message:
+                          err instanceof Error ? err.message : "Error",
+                      });
+                    }
+                  })();
                 }}
                 className="cursor-pointer rounded-md border-none bg-transparent px-3 py-1.5 text-[12.5px] font-semibold text-sale"
               >

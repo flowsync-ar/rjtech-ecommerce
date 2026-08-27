@@ -1,22 +1,19 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { CategoryIcon } from "@/components/CategoryIcon";
+import { CategoryCarousel } from "@/components/CategoryCarousel";
 import { ProductCard } from "@/components/ProductCard";
-import { ProductImage } from "@/components/ProductImage";
 import { TrustIcon } from "@/components/TrustIcon";
-import {
-  categoryLabels,
-  homeCategoryIds,
-  trustBadges,
-} from "@/lib/products";
+import { trustBadges } from "@/lib/products";
 import { useCatalogStore } from "@/store/catalog-store";
 import { useStoreConfig } from "@/store/store-config";
 
 export default function HomePage() {
   const products = useCatalogStore((s) => s.products);
   const config = useStoreConfig((s) => s.config);
-  const featured = products.slice(0, 6);
+  const featured = products.filter((p) => p.featured).slice(0, 6);
+  const showcase = featured.length > 0 ? featured : products.slice(0, 6);
 
   return (
     <>
@@ -48,36 +45,19 @@ export default function HomePage() {
             </Link>
           </div>
         </div>
-        {featured[0] ? (
-          <ProductImage
-            product={featured[0]}
-            className="h-[280px] w-full min-w-0 flex-1 rounded-2xl md:h-[340px]"
-            sizes="(max-width: 768px) 100vw, 50vw"
+        <div className="relative h-[280px] w-full min-w-0 flex-1 overflow-hidden rounded-2xl md:h-[340px]">
+          <Image
+            src="/home-picture.png"
+            alt="Equipos RJ Tech: celulares, notebooks, audio y más"
+            fill
             priority
+            className="object-cover object-center"
+            sizes="(max-width: 768px) 100vw, 50vw"
           />
-        ) : (
-          <div className="stripe-bg flex h-[280px] w-full min-w-0 flex-1 items-center justify-center rounded-2xl font-mono text-xs text-muted-soft md:h-[340px]">
-            foto: equipos destacados
-          </div>
-        )}
-      </section>
-
-      <section className="pb-11">
-        <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-4 lg:grid-cols-7">
-          {homeCategoryIds.map((id) => (
-            <Link
-              key={id}
-              href={`/catalogo?categoria=${id}`}
-              className="flex cursor-pointer flex-col items-center gap-2.5 rounded-xl border border-border bg-surface px-2 py-[18px] no-underline transition-colors hover:border-muted-soft hover:bg-accent-soft hover:!no-underline"
-            >
-              <CategoryIcon category={id} />
-              <div className="text-center text-[12.5px] font-semibold text-foreground">
-                {categoryLabels[id]}
-              </div>
-            </Link>
-          ))}
         </div>
       </section>
+
+      <CategoryCarousel />
 
       <section className="pb-11">
         <div className="mb-[22px] flex items-baseline justify-between">
@@ -87,7 +67,7 @@ export default function HomePage() {
           </Link>
         </div>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {featured.map((p) => (
+          {showcase.map((p) => (
             <ProductCard key={p.id} product={p} />
           ))}
         </div>

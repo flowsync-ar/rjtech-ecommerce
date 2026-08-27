@@ -25,6 +25,15 @@ function IconShell({ children }: { children: React.ReactNode }) {
 }
 
 export function CategoryIcon({ category, className = "" }: Props) {
+  const known =
+    category === "celulares" ||
+    category === "notebooks" ||
+    category === "macbooks" ||
+    category === "videojuego" ||
+    category === "televisores" ||
+    category === "gadgets" ||
+    category === "audio";
+
   return (
     <div
       className={`flex h-11 w-11 items-center justify-center rounded-full bg-accent-soft text-muted-soft ${className}`}
@@ -76,6 +85,12 @@ export function CategoryIcon({ category, className = "" }: Props) {
           <path d="M4 13.5v-2a8 8 0 0 1 16 0v2" />
           <rect x="2.5" y="12" width="4" height="7" rx="1.5" />
           <rect x="17.5" y="12" width="4" height="7" rx="1.5" />
+        </IconShell>
+      )}
+      {!known && (
+        <IconShell>
+          <path d="M4 7h16v10H4z" />
+          <path d="M8 7V5.5A4 4 0 0 1 12 1.5 4 4 0 0 1 16 5.5V7" />
         </IconShell>
       )}
     </div>
