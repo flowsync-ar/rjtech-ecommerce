@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductGallery } from "@/components/ProductGallery";
 import { QuantitySelector } from "@/components/QuantitySelector";
+import { ColorSwatches } from "@/components/ColorSwatches";
 import { productMeta, starsFor } from "@/lib/format";
 import {
   getRelatedProducts,
@@ -84,6 +85,15 @@ export default function ProductoPage() {
     meta.categoryLabel ??
     product.category;
 
+  const specs = [
+    ...(product.ram ? [{ k: "Memoria RAM", v: product.ram }] : []),
+    ...(product.storage ? [{ k: "Almacenamiento", v: product.storage }] : []),
+    ...(product.colors?.length
+      ? [{ k: "Colores", v: product.colors.join(" · ") }]
+      : []),
+    ...productSpecs,
+  ];
+
   const onAddToCart = () => {
     void addItem(product.id, qty);
   };
@@ -114,7 +124,7 @@ export default function ProductoPage() {
         / <span className="text-foreground">{product.name}</span>
       </div>
 
-      <div className="grid grid-cols-1 gap-12 py-6 lg:grid-cols-[1fr_420px]">
+      <div className="grid grid-cols-1 gap-12 py-6 lg:grid-cols-[1fr_minmax(520px,580px)]">
         <div>
           <ProductGallery product={product} />
         </div>
@@ -129,6 +139,22 @@ export default function ProductoPage() {
           <div className="mb-[18px] text-sm text-muted">
             {meta.stars} · {product.reviews} reseñas
           </div>
+
+          {(product.ram || product.storage) && (
+            <div className="mb-5 flex flex-wrap gap-2 text-[13px]">
+              {product.ram && (
+                <span className="rounded-lg border border-border bg-accent-soft px-2.5 py-1 font-semibold text-foreground">
+                  RAM {product.ram}
+                </span>
+              )}
+              {product.storage && (
+                <span className="rounded-lg border border-border bg-accent-soft px-2.5 py-1 font-semibold text-foreground">
+                  {product.storage}
+                </span>
+              )}
+            </div>
+          )}
+
           <div className="mb-1.5 flex items-baseline gap-3">
             <div className="text-[30px] font-bold">{meta.fmtPrice}</div>
             {meta.fmtOldPrice && (
@@ -156,32 +182,54 @@ export default function ProductoPage() {
           </div>
           <div className="mb-[22px] h-px bg-border" />
 
-          {meta.inStock && (
+          {meta.inStock ? (
             <>
-              <div className="mb-4">
+              <div className="mb-4 flex flex-nowrap items-center gap-4">
                 <QuantitySelector
                   value={qty}
                   onDec={() => setQty((q) => Math.max(1, q - 1))}
                   onInc={() => setQty((q) => q + 1)}
                 />
+                {product.colors?.length > 0 && (
+                  <div className="flex min-w-0 flex-1 items-center gap-2.5">
+                    <span className="shrink-0 text-[11px] font-bold tracking-wide text-muted uppercase">
+                      Colores
+                    </span>
+                    <ColorSwatches
+                      colors={product.colors}
+                      size="md"
+                      showLabels
+                      className="min-w-0"
+                    />
+                  </div>
+                )}
               </div>
-              <div className="mb-3.5 flex flex-col gap-3 sm:flex-row">
+              <div className="mb-3.5 flex flex-wrap gap-3">
                 <button
                   type="button"
                   onClick={onAddToCart}
-                  className="flex-1 cursor-pointer rounded-[9px] border-none bg-primary-soft py-3.5 text-[14.5px] font-bold text-primary-dark"
+                  className="cursor-pointer rounded-[9px] border-none bg-primary-soft px-5 py-3 text-[14px] font-bold text-primary-dark"
                 >
                   Agregar al carrito
                 </button>
                 <button
                   type="button"
                   onClick={onBuyNow}
-                  className="flex-1 cursor-pointer rounded-[9px] border-none bg-primary py-3.5 text-[14.5px] font-bold text-white"
+                  className="cursor-pointer rounded-[9px] border-none bg-primary px-5 py-3 text-[14px] font-bold text-white"
                 >
                   Comprar ahora
                 </button>
               </div>
             </>
+          ) : (
+            product.colors?.length > 0 && (
+              <div className="mb-4 flex flex-nowrap items-center gap-2.5">
+                <span className="shrink-0 text-[11px] font-bold tracking-wide text-muted uppercase">
+                  Colores
+                </span>
+                <ColorSwatches colors={product.colors} size="md" showLabels />
+              </div>
+            )
           )}
           <div className="text-[12.5px] text-muted">
             Envío a todo el país · Garantía oficial 12 meses
@@ -189,7 +237,7 @@ export default function ProductoPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-12 py-7 lg:grid-cols-[1fr_420px]">
+      <div className="grid grid-cols-1 gap-12 py-7 lg:grid-cols-[1fr_minmax(520px,580px)]">
         <div>
           <h3 className="mb-3 text-base font-bold">Descripción</h3>
           <p className="mb-6 text-[14.5px] leading-relaxed text-body-text">
@@ -197,11 +245,11 @@ export default function ProductoPage() {
           </p>
           <h3 className="mb-3 text-base font-bold">Especificaciones</h3>
           <div className="overflow-hidden rounded-[10px] border border-border">
-            {productSpecs.map((s, i) => (
+            {specs.map((s, i) => (
               <div
-                key={s.k}
+                key={`${s.k}-${i}`}
                 className={`flex px-4 py-3 text-[13.5px] ${
-                  i < productSpecs.length - 1 ? "border-b border-border-soft" : ""
+                  i < specs.length - 1 ? "border-b border-border-soft" : ""
                 }`}
               >
                 <div className="w-40 shrink-0 text-muted">{s.k}</div>

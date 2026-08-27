@@ -15,7 +15,7 @@ export function QuantitySelector({ value, onDec, onInc, size = "md" }: Props) {
   const num = size === "sm" ? "w-7 text-[13.5px]" : "w-9 text-sm";
 
   return (
-    <div className="flex items-center rounded-[9px] border border-border">
+    <div className="inline-flex w-fit items-center rounded-[9px] border border-border">
       <button
         type="button"
         onClick={onDec}

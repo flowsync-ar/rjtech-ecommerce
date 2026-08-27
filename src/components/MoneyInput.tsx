@@ -26,6 +26,8 @@ type Props = {
   required?: boolean;
   name?: string;
   id?: string;
+  onBlur?: () => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 };
 
 export function MoneyInput({
@@ -41,6 +43,8 @@ export function MoneyInput({
   required,
   name,
   id,
+  onBlur,
+  onKeyDown,
 }: Props) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -162,6 +166,8 @@ export function MoneyInput({
           }
           onChange(Number(digits));
         }}
+        onBlur={onBlur}
+        onKeyDown={onKeyDown}
         className={`${className} ${padLeft}`.trim()}
       />
     </div>

@@ -105,6 +105,9 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
     if (input.installments != null) patch.installments = input.installments;
     if (input.description != null) patch.description = input.description;
     if (input.tags != null) patch.tags = input.tags;
+    if (input.colors != null) patch.colors = input.colors;
+    if (input.ram != null) patch.ram = input.ram;
+    if (input.storage != null) patch.storage = input.storage;
     if (input.imageUrl !== undefined || input.imageUrls !== undefined) {
       const urls = [
         ...new Set(

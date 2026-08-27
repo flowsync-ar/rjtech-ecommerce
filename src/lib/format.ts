@@ -26,6 +26,19 @@ export function formatPrice(n: number, currency: CurrencyCode = "USD"): string {
   return `${currencyPrefix(currency)} ${formatAmount(n)}`;
 }
 
+/**
+ * Precio de venta desde costo:
+ * (precio_costo / 0.87) + 30, redondeado hacia arriba al múltiplo de 5.
+ */
+export function salePriceFromCost(
+  nextCost: number | null,
+  previousSale = 0,
+): number {
+  if (nextCost == null || nextCost <= 0) return previousSale;
+  const raw = nextCost / 0.87 + 30;
+  return Math.ceil(raw / 5) * 5;
+}
+
 /** Extrae solo dígitos del input y devuelve el número entero. */
 export function parseMoneyInput(raw: string): number {
   const digits = raw.replace(/\D/g, "");

@@ -60,7 +60,7 @@ export default function NosotrosPage() {
             <p>
               RJ Tech no salió de una oficina de vidrio en Capital. Salimos de
               acá: de Santa Rosa, La Pampa, donde si algo se rompe o no llega,
-              se nota. Por eso armamos una tienda con stock real, precios
+              se nota. Por eso armamos un ecommerce con precios
               claros y cero chamuyo barato.
             </p>
             <p>

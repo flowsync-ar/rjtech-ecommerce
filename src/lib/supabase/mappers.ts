@@ -17,6 +17,9 @@ export type ProductRow = {
   installments: string;
   description: string;
   tags: string[] | null;
+  colors: string[] | null;
+  ram: string | null;
+  storage: string | null;
   image_url: string | null;
   image_urls: string[] | null;
   active: boolean | null;
@@ -110,6 +113,9 @@ export function mapProduct(row: ProductRow): Product {
     installments: row.installments,
     description: row.description,
     tags: row.tags ?? [],
+    colors: row.colors ?? [],
+    ram: row.ram ?? "",
+    storage: row.storage ?? "",
     imageUrl:
       row.image_url ??
       (row.image_urls && row.image_urls.length > 0 ? row.image_urls[0] : null),
@@ -138,6 +144,9 @@ export function toProductInsert(input: {
   installments: string;
   description: string;
   tags?: string[];
+  colors?: string[];
+  ram?: string;
+  storage?: string;
   imageUrl?: string | null;
   imageUrls?: string[];
   active?: boolean;
@@ -168,6 +177,9 @@ export function toProductInsert(input: {
     installments: input.installments,
     description: input.description,
     tags: input.tags ?? [],
+    colors: input.colors ?? [],
+    ram: input.ram ?? "",
+    storage: input.storage ?? "",
     image_url: urls[0] ?? null,
     image_urls: urls,
     active: input.active ?? true,

@@ -6,6 +6,7 @@ import { productHref } from "@/lib/products";
 import { productMeta } from "@/lib/format";
 import { useCurrency } from "@/hooks/useCurrency";
 import { ProductImage } from "./ProductImage";
+import { ColorSwatches } from "./ColorSwatches";
 
 type Props = {
   product: Product;
@@ -16,6 +17,7 @@ export function ProductCard({ product, variant = "default" }: Props) {
   const { currency, toDisplay } = useCurrency();
   const meta = productMeta(product, currency, toDisplay);
   const isCompact = variant === "compact";
+  const colors = product.colors ?? [];
 
   return (
     <Link
@@ -44,6 +46,9 @@ export function ProductCard({ product, variant = "default" }: Props) {
         >
           {product.name}
         </div>
+        {colors.length > 0 && (
+          <ColorSwatches colors={colors} size={isCompact ? "sm" : "sm"} />
+        )}
         {!isCompact && (
           <div className="text-[12.5px] text-muted-soft">
             {meta.stars} ({product.reviews})
