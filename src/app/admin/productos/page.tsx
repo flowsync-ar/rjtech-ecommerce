@@ -109,12 +109,17 @@ export default function AdminProductosPage() {
   const prefix = currencyPrefix(priceCurrency);
 
   const [query, setQuery] = useState("");
+  const [filterBrand, setFilterBrand] = useState("");
+  const [filterCategory, setFilterCategory] = useState<CategoryId | "">("");
+  const [filterProvider, setFilterProvider] = useState("");
   const [editing, setEditing] = useState<Product | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [panel, setPanel] = useState<Panel>("none");
   const [imageQueueIds, setImageQueueIds] = useState<number[]>([]);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState({ current: 0, total: 0 });
+  const [bulkAction, setBulkAction] = useState<string>("");
   const [bulkCategory, setBulkCategory] = useState<CategoryId | "">("");
   const [bulkBrand, setBulkBrand] = useState("");
   const [bulkTags, setBulkTags] = useState<string[]>([]);
@@ -131,23 +136,44 @@ export default function AdminProductosPage() {
   );
 
   const filtered = useMemo(() => {
+    let result = products;
+
+    // Filter by search query
     const q = query.trim().toLowerCase();
-    if (!q) return products;
-    return products.filter((p) => {
-      const tags = (p.tags ?? []).join(" ").toLowerCase();
-      return (
-        p.name.toLowerCase().includes(q) ||
-        p.brand.toLowerCase().includes(q) ||
-        p.description.toLowerCase().includes(q) ||
-        categoryLabels[p.category]?.toLowerCase().includes(q) ||
-        categories.some(
-          (c) =>
-            c.id === p.category && c.name.toLowerCase().includes(q),
-        ) ||
-        tags.includes(q)
-      );
-    });
-  }, [products, query, categories]);
+    if (q) {
+      result = result.filter((p) => {
+        const tags = (p.tags ?? []).join(" ").toLowerCase();
+        return (
+          p.name.toLowerCase().includes(q) ||
+          p.brand.toLowerCase().includes(q) ||
+          p.description.toLowerCase().includes(q) ||
+          categoryLabels[p.category]?.toLowerCase().includes(q) ||
+          categories.some(
+            (c) =>
+              c.id === p.category && c.name.toLowerCase().includes(q),
+          ) ||
+          tags.includes(q)
+        );
+      });
+    }
+
+    // Filter by brand
+    if (filterBrand) {
+      result = result.filter((p) => p.brand === filterBrand);
+    }
+
+    // Filter by category
+    if (filterCategory) {
+      result = result.filter((p) => p.category === filterCategory);
+    }
+
+    // Filter by provider
+    if (filterProvider) {
+      result = result.filter((p) => p.provider === filterProvider);
+    }
+
+    return result;
+  }, [products, query, filterBrand, filterCategory, filterProvider, categories]);
 
   const filteredIds = useMemo(() => filtered.map((p) => p.id), [filtered]);
   const selectedCount = selected.size;
@@ -297,6 +323,8 @@ export default function AdminProductosPage() {
       });
     } finally {
       setBulkBusy(false);
+      setBulkAction("");
+      setBulkProgress({ current: 0, total: 0 });
     }
   };
 
@@ -470,13 +498,77 @@ export default function AdminProductosPage() {
         </div>
       </div>
 
-      <input
-        type="search"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Buscar por nombre, marca, tags..."
-        className={`${inputClass} mb-5 max-w-md`}
-      />
+      <div className="mb-4 space-y-3">
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Buscar por nombre, marca, tags..."
+          className={`${inputClass} max-w-md`}
+        />
+        <div className="flex flex-wrap gap-3">
+          <div className="w-full sm:w-48">
+            <ComboSelect
+              value={filterBrand}
+              options={[
+                { value: "", label: "Todas las marcas" },
+                ...brands
+                  .filter((b) => b.active)
+                  .map((b) => ({ value: b.name, label: b.name })),
+              ]}
+              onChange={setFilterBrand}
+              placeholder="Filtrar por marca"
+              searchable
+              fullWidth
+            />
+          </div>
+          <div className="w-full sm:w-48">
+            <ComboSelect
+              value={filterCategory}
+              options={[
+                { value: "", label: "Todas las categorías" },
+                ...categories
+                  .filter((c) => c.active)
+                  .map((c) => ({ value: c.id, label: c.name })),
+              ]}
+              onChange={(v) => setFilterCategory(v as CategoryId | "")}
+              placeholder="Filtrar por categoría"
+              searchable
+              fullWidth
+            />
+          </div>
+          <div className="w-full sm:w-48">
+            <ComboSelect
+              value={filterProvider}
+              options={[
+                { value: "", label: "Todos los proveedores" },
+                ...providers.map((p) => ({
+                  value: p.name,
+                  label: p.name,
+                })),
+              ]}
+              onChange={setFilterProvider}
+              placeholder="Filtrar por proveedor"
+              searchable
+              fullWidth
+            />
+          </div>
+          {(filterBrand || filterCategory || filterProvider || query) && (
+            <button
+              type="button"
+              onClick={() => {
+                setQuery("");
+                setFilterBrand("");
+                setFilterCategory("");
+                setFilterProvider("");
+              }}
+              className="cursor-pointer rounded-lg border border-border bg-transparent px-3 py-2.5 text-sm font-semibold text-muted hover:bg-accent-soft"
+            >
+              Limpiar filtros
+            </button>
+          )}
+        </div>
+      </div>
 
       {panel === "bulk" && (
         <BulkProductImport
@@ -726,6 +818,25 @@ export default function AdminProductosPage() {
       <div className="overflow-hidden rounded-xl border border-border bg-surface">
         {selectedCount > 0 && (
           <div className="flex flex-col gap-3 border-b border-border bg-primary-softer/60 px-4 py-3">
+            {bulkBusy && bulkAction && (
+              <div className="flex flex-col gap-2">
+                <div className="text-sm font-semibold text-foreground">
+                  {bulkAction}... ({bulkProgress.current}/{bulkProgress.total})
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-primary-softer">
+                  <div
+                    className="h-full bg-primary transition-all duration-200"
+                    style={{
+                      width: `${
+                        bulkProgress.total > 0
+                          ? (bulkProgress.current / bulkProgress.total) * 100
+                          : 0
+                      }%`,
+                    }}
+                  />
+                </div>
+              </div>
+            )}
             <div className="flex flex-wrap items-center gap-2 text-sm">
               <span className="font-semibold">
                 {selectedCount} seleccionado{selectedCount === 1 ? "" : "s"}
@@ -795,6 +906,22 @@ export default function AdminProductosPage() {
                       icon={<TagIcon />}
                       label="Taguear"
                       onClick={() => openBulkPanel("tags")}
+                    />
+                    <BulkMenuItem
+                      icon={<TagRemoveIcon />}
+                      label="Quitar tags"
+                      onClick={() => {
+                        setBulkMenuOpen(false);
+                        setBulkAction("Borrando tags");
+                        void runBulk(async () => {
+                          const ids = selectedIds();
+                          setBulkProgress({ current: 0, total: ids.length });
+                          for (let i = 0; i < ids.length; i++) {
+                            await updateProduct(ids[i], { tags: [] });
+                            setBulkProgress({ current: i + 1, total: ids.length });
+                          }
+                        });
+                      }}
                     />
                     <BulkMenuItem
                       icon={<FolderIcon />}
@@ -882,7 +1009,7 @@ export default function AdminProductosPage() {
               </div>
             )}
 
-            {bulkPanel === "category" && (
+{bulkPanel === "category" && (
               <div className="rounded-lg border border-border bg-surface p-3">
                 <div className="mb-2 text-[11px] font-semibold tracking-wide text-muted uppercase">
                   Cambiar categoría
@@ -1360,6 +1487,15 @@ function TagIcon() {
     <svg {...iconProps()}>
       <path d="M20.6 13.4 12.7 21.3a1.4 1.4 0 0 1-2 0L2.7 13.3a2 2 0 0 1-.6-1.4V4a1.5 1.5 0 0 1 1.5-1.5h7.9a2 2 0 0 1 1.4.6l7.7 7.7a1.4 1.4 0 0 1 0 2z" />
       <circle cx="7.5" cy="7.5" r="1.2" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function TagRemoveIcon() {
+  return (
+    <svg {...iconProps()}>
+      <path d="M20.6 13.4 12.7 21.3a1.4 1.4 0 0 1-2 0L2.7 13.3a2 2 0 0 1-.6-1.4V4a1.5 1.5 0 0 1 1.5-1.5h7.9a2 2 0 0 1 1.4.6l7.7 7.7a1.4 1.4 0 0 1 0 2z" />
+      <line x1="6" y1="8" x2="9" y2="8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }

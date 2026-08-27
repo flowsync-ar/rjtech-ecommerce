@@ -86,13 +86,16 @@ export default function ProductoPage() {
     meta.categoryLabel ??
     product.category;
 
+  const isTester = product.tags?.some((tag) => tag.toLowerCase() === "tester") ?? false;
+  const warranty = isTester ? "1 mes" : "6 meses";
   const specs = [
     ...(product.ram ? [{ k: "Memoria RAM", v: product.ram }] : []),
     ...(product.storage ? [{ k: "Almacenamiento", v: product.storage }] : []),
     ...(product.colors?.length
       ? [{ k: "Colores", v: product.colors.join(" · ") }]
       : []),
-    ...productSpecs,
+    ...productSpecs.filter((s) => s.k !== "Garantía"),
+    { k: "Garantía", v: warranty },
   ];
 
   const onAddToCart = () => {
@@ -134,9 +137,16 @@ export default function ProductoPage() {
           <div className="mb-2 text-xs font-bold tracking-wide text-primary uppercase">
             {meta.categoryLabel}
           </div>
-          <h1 className="mb-2.5 text-[27px] leading-tight font-bold tracking-tight">
-            {product.name}
-          </h1>
+          <div className="mb-2.5 flex items-center gap-3">
+            <h1 className="text-[27px] leading-tight font-bold tracking-tight">
+              {product.name}
+            </h1>
+            {product.tags?.some((tag) => tag.toLowerCase() === "tester") && (
+              <span className="inline-block rounded-full bg-accent-soft px-2.5 py-1 text-[11px] font-semibold text-muted">
+                TESTER
+              </span>
+            )}
+          </div>
           <div className="mb-[18px] text-sm text-muted">
             {meta.stars} · {product.reviews} reseñas
           </div>
@@ -168,9 +178,6 @@ export default function ProductoPage() {
                 </div>
               </>
             )}
-          </div>
-          <div className="mb-4 text-[13.5px] text-body-text">
-            {product.installments}
           </div>
           <div
             className={`mb-[22px] inline-block rounded-[7px] px-3 py-1.5 text-[12.5px] font-bold ${
@@ -239,7 +246,7 @@ export default function ProductoPage() {
             </>
           )}
           <div className="text-[12.5px] text-muted">
-            Envío a todo el país · Garantía oficial 12 meses
+            Envío a todo el país · Garantía oficial {warranty}
           </div>
         </div>
       </div>

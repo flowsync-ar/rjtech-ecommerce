@@ -45,6 +45,11 @@ export function ProductCard({ product, variant = "default" }: Props) {
           className={`font-semibold leading-snug text-foreground ${isCompact ? "mb-1.5 text-[13.5px]" : "text-[15px]"}`}
         >
           {product.name}
+          {product.tags?.some((tag) => tag.toLowerCase() === "tester") && (
+            <span className="ml-2 inline-block rounded-lg bg-orange-100 px-2.5 py-1 text-[11px] font-bold text-orange-700">
+              TESTER
+            </span>
+          )}
         </div>
         {colors.length > 0 && (
           <ColorSwatches colors={colors} size={isCompact ? "sm" : "sm"} />

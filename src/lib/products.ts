@@ -479,7 +479,7 @@ export const trustBadges = [
 export const productSpecs = [
   { k: "Pantalla", v: "Alta resolución, tratamiento antirreflejo" },
   { k: "Batería", v: "Hasta un día completo de uso" },
-  { k: "Garantía", v: "12 meses oficial" },
+  { k: "Garantía", v: "6 meses" },
   { k: "Caja incluye", v: "Equipo, cable de carga y manual" },
 ];
 

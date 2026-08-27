@@ -67,9 +67,7 @@ export function stockInfo(product: Product) {
   const inStock = product.stock > 0;
   return {
     inStock,
-    label: inStock
-      ? `En stock (${product.stock} disponibles)`
-      : "Agotado",
+    label: inStock ? "Disponible" : "Agotado",
   };
 }
 
