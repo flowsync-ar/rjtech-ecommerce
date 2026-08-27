@@ -31,6 +31,8 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: "name_desc", label: "Nombre: Z → A" },
 ];
 
+const PAGE_SIZE = 8;
+
 type PriceBucket = {
   id: string;
   label: string;
@@ -123,6 +125,7 @@ export default function CatalogoClient() {
   const [draftMax, setDraftMax] = useState("");
   const [sort, setSort] = useState<SortOption>("relevance");
   const [query, setQuery] = useState(initialQuery);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     setQuery(searchParams.get("q") ?? "");
@@ -203,6 +206,36 @@ export default function CatalogoClient() {
       ),
     [category, brand, query, storeMin, storeMax, sort, products],
   );
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+
+  const pageItems = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filtered.slice(start, start + PAGE_SIZE);
+  }, [filtered, currentPage]);
+
+  // Reset página al cambiar filtros
+  useEffect(() => {
+    setPage(1);
+  }, [category, brand, query, storeMin, storeMax, sort]);
+
+  const pageNumbers = useMemo(() => {
+    const maxButtons = 5;
+    if (totalPages <= maxButtons) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+    let start = Math.max(1, currentPage - 2);
+    let end = Math.min(totalPages, start + maxButtons - 1);
+    start = Math.max(1, end - maxButtons + 1);
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+  }, [currentPage, totalPages]);
+
+  const goToPage = (p: number) => {
+    const next = Math.min(totalPages, Math.max(1, p));
+    setPage(next);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const categories: { id: CategoryId | "all"; label: string }[] = useMemo(() => {
     const fromStore = storeCategories
@@ -291,19 +324,21 @@ export default function CatalogoClient() {
 
   return (
     <>
-      <div className="pt-5 text-[13px] text-muted-soft">
-        <Link href="/" className="text-muted-soft">
-          Inicio
-        </Link>{" "}
-        / <span className="text-foreground">Catálogo</span>
-      </div>
+      {/* Full-bleed: menú pegado a la izquierda del viewport */}
+      <div className="relative left-1/2 w-screen max-w-[100vw] -translate-x-1/2">
+        <div className="px-4 pt-5 text-[13px] text-muted-soft md:px-6 lg:px-4 xl:px-5">
+          <Link href="/" className="text-muted-soft">
+            Inicio
+          </Link>{" "}
+          / <span className="text-foreground">Catálogo</span>
+        </div>
 
-      <div className="flex flex-col gap-9 py-5 pb-[60px] lg:flex-row lg:items-start">
-        <aside className="w-full shrink-0 space-y-7 lg:w-[250px]">
-          <div>
-            <div className="mb-3 text-[13px] font-bold tracking-wide text-muted uppercase">
-              Categoría
-            </div>
+        <div className="flex flex-col gap-8 px-4 py-5 pb-[60px] md:px-6 lg:flex-row lg:items-start lg:gap-6 lg:px-0 lg:pl-3 lg:pr-6 xl:pl-4 xl:pr-8">
+          <aside className="w-full shrink-0 space-y-7 lg:w-[210px] lg:pl-1 xl:w-[220px]">
+            <div>
+              <div className="mb-3 text-[13px] font-bold tracking-wide text-muted uppercase">
+                Categoría
+              </div>
             <div className="flex flex-col gap-1">
               {categories.map((cat) => {
                 const active = cat.id === category;
@@ -458,6 +493,11 @@ export default function CatalogoClient() {
                 {filtered.length}
               </span>{" "}
               {filtered.length === 1 ? "producto" : "productos"}
+              {filtered.length > 0 && (
+                <span className="ml-1.5 text-muted-soft">
+                  · pág. {currentPage} de {totalPages}
+                </span>
+              )}
               {activeFilters > 0 && (
                 <span className="ml-2 text-muted-soft">
                   · {activeFilters} filtro{activeFilters > 1 ? "s" : ""} activo
@@ -513,13 +553,83 @@ export default function CatalogoClient() {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-[22px] sm:grid-cols-2 xl:grid-cols-3">
-              {filtered.map((p) => (
-                <ProductCard key={p.id} product={p} />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 gap-[18px] sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {pageItems.map((p) => (
+                  <ProductCard key={p.id} product={p} />
+                ))}
+              </div>
+
+              {totalPages > 1 && (
+                <nav
+                  aria-label="Paginación"
+                  className="mt-8 flex flex-wrap items-center justify-center gap-1.5"
+                >
+                  <button
+                    type="button"
+                    disabled={currentPage <= 1}
+                    onClick={() => goToPage(currentPage - 1)}
+                    className="cursor-pointer rounded-lg border border-border bg-surface px-3 py-2 text-[13px] font-semibold text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Anterior
+                  </button>
+                  {pageNumbers[0] > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => goToPage(1)}
+                        className="cursor-pointer rounded-lg border border-border bg-surface px-3 py-2 text-[13px] font-semibold"
+                      >
+                        1
+                      </button>
+                      {pageNumbers[0] > 2 && (
+                        <span className="px-1 text-muted-soft">…</span>
+                      )}
+                    </>
+                  )}
+                  {pageNumbers.map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => goToPage(n)}
+                      aria-current={n === currentPage ? "page" : undefined}
+                      className={`min-w-9 cursor-pointer rounded-lg border px-3 py-2 text-[13px] font-semibold ${
+                        n === currentPage
+                          ? "border-primary bg-primary text-white"
+                          : "border-border bg-surface text-foreground hover:bg-accent-soft"
+                      }`}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                  {pageNumbers[pageNumbers.length - 1] < totalPages && (
+                    <>
+                      {pageNumbers[pageNumbers.length - 1] < totalPages - 1 && (
+                        <span className="px-1 text-muted-soft">…</span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => goToPage(totalPages)}
+                        className="cursor-pointer rounded-lg border border-border bg-surface px-3 py-2 text-[13px] font-semibold"
+                      >
+                        {totalPages}
+                      </button>
+                    </>
+                  )}
+                  <button
+                    type="button"
+                    disabled={currentPage >= totalPages}
+                    onClick={() => goToPage(currentPage + 1)}
+                    className="cursor-pointer rounded-lg border border-border bg-surface px-3 py-2 text-[13px] font-semibold text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Siguiente
+                  </button>
+                </nav>
+              )}
+            </>
           )}
         </div>
+      </div>
       </div>
     </>
   );

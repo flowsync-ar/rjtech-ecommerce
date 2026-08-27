@@ -157,7 +157,6 @@ export function ProductGallery({ product, className = "" }: Props) {
                 className="truncate text-sm font-semibold text-foreground"
               >
                 {product.name}
-                {hasMany ? ` · ${active + 1} / ${images.length}` : ""}
               </h2>
               <button
                 type="button"
