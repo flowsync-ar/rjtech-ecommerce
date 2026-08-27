@@ -2,30 +2,62 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductGallery } from "@/components/ProductGallery";
 import { QuantitySelector } from "@/components/QuantitySelector";
 import { productMeta, starsFor } from "@/lib/format";
 import {
   getRelatedProducts,
+  productHref,
   productSpecs,
   reviewsData,
 } from "@/lib/products";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useCartStore } from "@/store/cart-store";
 import { useCatalogStore } from "@/store/catalog-store";
+import { useCategoriesStore } from "@/store/categories-store";
 import { useCheckoutStore } from "@/store/checkout-store";
 
+/**
+ * Rutas soportadas:
+ * - /producto/macbooks/173  (canónica)
+ * - /producto/173           (legacy → redirect)
+ */
 export default function ProductoPage() {
-  const params = useParams<{ id: string }>();
+  const params = useParams<{ slug?: string[] }>();
   const router = useRouter();
-  const { currency } = useCurrency();
+  const slug = useMemo(
+    () => (Array.isArray(params.slug) ? params.slug : []),
+    [params.slug],
+  );
+
+  const categoriaFromUrl = slug.length >= 2 ? slug[0] : null;
+  const idFromUrl = slug.length >= 2 ? slug[1] : slug[0];
+
+  const { currency, toDisplay } = useCurrency();
   const products = useCatalogStore((s) => s.products);
-  const product = products.find((p) => p.id === Number(params.id));
+  const hydrated = useCatalogStore((s) => s.hydrated);
+  const categories = useCategoriesStore((s) => s.categories);
+  const product = products.find((p) => p.id === Number(idFromUrl));
   const [qty, setQty] = useState(1);
   const addItem = useCartStore((s) => s.addItem);
   const resetCheckout = useCheckoutStore((s) => s.resetCheckout);
+
+  useEffect(() => {
+    if (!hydrated || !product) return;
+    const canonical = productHref(product);
+    // Legacy /producto/173 o categoría incorrecta
+    if (slug.length === 1 || categoriaFromUrl !== product.category) {
+      router.replace(canonical);
+    }
+  }, [hydrated, product, slug.length, categoriaFromUrl, router]);
+
+  if (!hydrated) {
+    return (
+      <div className="py-16 text-center text-sm text-muted">Cargando…</div>
+    );
+  }
 
   if (!product) {
     return (
@@ -38,8 +70,19 @@ export default function ProductoPage() {
     );
   }
 
-  const meta = productMeta(product, currency);
+  // Mientras redirige legacy / categoría incorrecta
+  if (slug.length === 1 || categoriaFromUrl !== product.category) {
+    return (
+      <div className="py-16 text-center text-sm text-muted">Redirigiendo…</div>
+    );
+  }
+
+  const meta = productMeta(product, currency, toDisplay);
   const related = getRelatedProducts(product, 4, products);
+  const categoryName =
+    categories.find((c) => c.id === product.category)?.name ??
+    meta.categoryLabel ??
+    product.category;
 
   const onAddToCart = () => {
     void addItem(product.id, qty);
@@ -60,6 +103,13 @@ export default function ProductoPage() {
         /{" "}
         <Link href="/catalogo" className="text-muted-soft">
           Catálogo
+        </Link>{" "}
+        /{" "}
+        <Link
+          href={`/catalogo?categoria=${encodeURIComponent(product.category)}`}
+          className="text-muted-soft"
+        >
+          {categoryName}
         </Link>{" "}
         / <span className="text-foreground">{product.name}</span>
       </div>

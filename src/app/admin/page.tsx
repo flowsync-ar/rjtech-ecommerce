@@ -4,10 +4,10 @@ import Link from "next/link";
 import { useCatalogStore } from "@/store/catalog-store";
 import { useProvidersStore } from "@/store/providers-store";
 import { useStoreConfig } from "@/store/store-config";
-import { useCurrency } from "@/hooks/useCurrency";
+import { useStoreCurrency } from "@/hooks/useCurrency";
 
 export default function AdminHomePage() {
-  const { formatPrice } = useCurrency();
+  const { formatPrice } = useStoreCurrency();
   const products = useCatalogStore((s) => s.products);
   const providers = useProvidersStore((s) => s.providers);
   const config = useStoreConfig((s) => s.config);

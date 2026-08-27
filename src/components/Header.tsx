@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { BrandLogo } from "@/components/BrandLogo";
+import { CurrencyToggle } from "@/components/CurrencyToggle";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuthStore } from "@/store/auth-store";
 import { useCartStore } from "@/store/cart-store";
@@ -19,8 +20,10 @@ export function Header() {
   useEffect(() => setMounted(true), []);
 
   const count = mounted ? cartCount : 0;
-  const accountLabel =
-    mounted && user ? user.name.split(" ")[0] : "Mi cuenta";
+  const isLoggedIn = mounted && Boolean(user);
+  const accountLabel = isLoggedIn
+    ? `Mi cuenta (${user!.name.split(" ")[0]})`
+    : "Iniciar sesión";
   const isHome = pathname === "/";
   const isCatalog = pathname.startsWith("/catalogo");
   const isNosotros = pathname.startsWith("/nosotros");
@@ -78,39 +81,59 @@ export function Header() {
 
         <div className="flex-1" />
 
-        <div className="flex items-center gap-1 sm:gap-2">
-          <Link
-            href="/cuenta"
-            className="rounded-md px-2.5 py-2 text-[13.5px] font-medium text-muted no-underline hover:!no-underline"
-          >
-            {accountLabel}
-          </Link>
-          <Link
-            href="/carrito"
-            aria-label={`Carrito${count > 0 ? `, ${count} productos` : ""}`}
-            className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface text-foreground no-underline transition-colors hover:bg-accent-soft hover:!no-underline"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.75"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-[18px] w-[18px]"
-              aria-hidden
+        <div className="flex flex-col items-end gap-1.5">
+          <CurrencyToggle />
+          <div className="flex items-center gap-1 sm:gap-2">
+            <Link
+              href="/cuenta"
+              aria-label={accountLabel}
+              title={accountLabel}
+              className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface text-foreground no-underline transition-colors hover:bg-accent-soft hover:!no-underline"
             >
-              <circle cx="9" cy="20" r="1.25" fill="currentColor" stroke="none" />
-              <circle cx="18" cy="20" r="1.25" fill="currentColor" stroke="none" />
-              <path d="M3 4h2l2.2 11.2a1.5 1.5 0 0 0 1.5 1.2h8.6a1.5 1.5 0 0 0 1.45-1.1L21 8H7" />
-            </svg>
-            {count > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold leading-none text-white">
-                {count}
-              </span>
-            )}
-          </Link>
-          <ThemeToggle />
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-[18px] w-[18px]"
+                aria-hidden
+              >
+                <circle cx="12" cy="8" r="3.25" />
+                <path d="M5.5 19.5c1.6-3.2 4-4.75 6.5-4.75s4.9 1.55 6.5 4.75" />
+              </svg>
+              {isLoggedIn && (
+                <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-primary" />
+              )}
+            </Link>
+            <Link
+              href="/carrito"
+              aria-label={`Carrito${count > 0 ? `, ${count} productos` : ""}`}
+              className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface text-foreground no-underline transition-colors hover:bg-accent-soft hover:!no-underline"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-[18px] w-[18px]"
+                aria-hidden
+              >
+                <circle cx="9" cy="20" r="1.25" fill="currentColor" stroke="none" />
+                <circle cx="18" cy="20" r="1.25" fill="currentColor" stroke="none" />
+                <path d="M3 4h2l2.2 11.2a1.5 1.5 0 0 0 1.5 1.2h8.6a1.5 1.5 0 0 0 1.45-1.1L21 8H7" />
+              </svg>
+              {count > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold leading-none text-white">
+                  {count}
+                </span>
+              )}
+            </Link>
+            <ThemeToggle />
+          </div>
         </div>
       </div>
     </header>

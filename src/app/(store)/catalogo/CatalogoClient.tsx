@@ -2,20 +2,26 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ComboSelect } from "@/components/ComboSelect";
 import { ProductCard } from "@/components/ProductCard";
-import { formatPrice } from "@/lib/format";
-import { useCurrency } from "@/hooks/useCurrency";
+import {
+  currencyPrefix,
+  formatAmount,
+  type CurrencyCode,
+} from "@/lib/format";
+import { convertAmount, useCurrency } from "@/hooks/useCurrency";
+import { useFxStore } from "@/store/fx-store";
 import {
   categoryLabels,
   filterProducts,
   getAllBrands,
-  getPriceBounds,
   type CategoryId,
+  type Product,
   type SortOption,
 } from "@/lib/products";
 import { useCatalogStore } from "@/store/catalog-store";
+import { useCategoriesStore } from "@/store/categories-store";
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: "relevance", label: "Relevancia" },
@@ -25,66 +31,162 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: "name_desc", label: "Nombre: Z → A" },
 ];
 
-type PriceStepId = "all" | "lt300" | "300to800" | "800to1500" | "gt1500";
+type PriceBucket = {
+  id: string;
+  label: string;
+  min?: number;
+  max?: number;
+};
+
+function roundPrice(n: number): number {
+  if (n < 1000) return Math.max(100, Math.round(n / 100) * 100);
+  if (n < 10_000) return Math.round(n / 500) * 500;
+  if (n < 100_000) return Math.round(n / 5_000) * 5_000;
+  if (n < 1_000_000) return Math.round(n / 50_000) * 50_000;
+  return Math.round(n / 100_000) * 100_000;
+}
+
+function buildPriceBuckets(
+  prices: number[],
+  currency: CurrencyCode,
+): PriceBucket[] {
+  if (prices.length === 0) return [];
+  const sorted = [...prices].sort((a, b) => a - b);
+  const p33 = sorted[Math.floor((sorted.length - 1) * 0.33)] ?? sorted[0];
+  const p66 = sorted[Math.floor((sorted.length - 1) * 0.66)] ?? sorted.at(-1)!;
+  let low = roundPrice(p33);
+  let high = roundPrice(p66);
+  if (high <= low) high = low * 2;
+
+  const prefix = currencyPrefix(currency);
+  const fmt = (n: number) => `${prefix} ${formatAmount(n)}`;
+
+  return [
+    {
+      id: "lt",
+      label: `Hasta ${fmt(low)}`,
+      max: low,
+    },
+    {
+      id: "mid",
+      label: `${fmt(low)} a ${fmt(high)}`,
+      min: low,
+      max: high,
+    },
+    {
+      id: "gt",
+      label: `Más de ${fmt(high)}`,
+      min: high,
+    },
+  ];
+}
+
+function countInRange(
+  list: Product[],
+  min?: number,
+  max?: number,
+): number {
+  return list.filter((p) => {
+    if (min != null && p.price < min) return false;
+    if (max != null && p.price > max) return false;
+    return true;
+  }).length;
+}
+
+function parseMoneyDigits(raw: string): number | null {
+  const digits = raw.replace(/\D/g, "");
+  if (!digits) return null;
+  return Number(digits);
+}
 
 export default function CatalogoClient() {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const { currency } = useCurrency();
-  const initialCat = (searchParams.get("categoria") as CategoryId | null) ?? "all";
+  const { currency, storeCurrency, blueVenta } = useCurrency();
+  const setDisplayCurrency = useFxStore((s) => s.setDisplayCurrency);
+  const initialCat =
+    (searchParams.get("categoria") as CategoryId | null) ?? "all";
   const initialQuery = searchParams.get("q") ?? "";
   const products = useCatalogStore((s) => s.products);
-  const priceBounds = getPriceBounds(products);
+  const storeCategories = useCategoriesStore((s) => s.categories);
 
-  const PRICE_STEPS = useMemo(
-    () => [
-      {
-        id: "all" as const,
-        label: "Cualquier precio",
-        min: undefined as number | undefined,
-        max: undefined as number | undefined,
-      },
-      {
-        id: "lt300" as const,
-        label: `Hasta ${formatPrice(300000, currency)}`,
-        min: undefined,
-        max: 300000,
-      },
-      {
-        id: "300to800" as const,
-        label: `${formatPrice(300000, currency)} – ${formatPrice(800000, currency)}`,
-        min: 300000,
-        max: 800000,
-      },
-      {
-        id: "800to1500" as const,
-        label: `${formatPrice(800000, currency)} – ${formatPrice(1500000, currency)}`,
-        min: 800000,
-        max: 1500000,
-      },
-      {
-        id: "gt1500" as const,
-        label: `Más de ${formatPrice(1500000, currency)}`,
-        min: 1500000,
-        max: undefined,
-      },
-    ],
-    [currency],
-  );
   const brands = getAllBrands(products);
 
   const [category, setCategory] = useState<CategoryId | "all">(
-    initialCat in categoryLabels || initialCat === "all" ? initialCat : "all",
+    initialCat === "all" || Boolean(initialCat) ? initialCat : "all",
   );
   const [brand, setBrand] = useState<string>("all");
-  const [priceStep, setPriceStep] = useState<PriceStepId>("all");
+  /** Rangos en moneda de visualización. */
+  const [minPrice, setMinPrice] = useState<number | undefined>(undefined);
+  const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined);
+  const [draftMin, setDraftMin] = useState("");
+  const [draftMax, setDraftMax] = useState("");
   const [sort, setSort] = useState<SortOption>("relevance");
   const [query, setQuery] = useState(initialQuery);
 
   useEffect(() => {
     setQuery(searchParams.get("q") ?? "");
+    const cat = searchParams.get("categoria");
+    setCategory(cat && cat !== "all" ? cat : "all");
   }, [searchParams]);
 
-  const selectedPrice = PRICE_STEPS.find((p) => p.id === priceStep) ?? PRICE_STEPS[0];
+  const pushCatalogUrl = (next: {
+    category?: CategoryId | "all";
+    query?: string;
+  }) => {
+    const params = new URLSearchParams(searchParams.toString());
+    const cat = next.category ?? category;
+    const q = next.query !== undefined ? next.query : query;
+
+    if (!cat || cat === "all") params.delete("categoria");
+    else params.set("categoria", cat);
+
+    const trimmed = q.trim();
+    if (!trimmed) params.delete("q");
+    else params.set("q", trimmed);
+
+    const qs = params.toString();
+    router.push(qs ? `/catalogo?${qs}` : "/catalogo", { scroll: false });
+  };
+
+  const selectCategory = (id: CategoryId | "all") => {
+    setCategory(id);
+    pushCatalogUrl({ category: id });
+  };
+
+  /** Base sin filtro de precio (para rangos y conteos). */
+  const baseList = useMemo(
+    () =>
+      filterProducts(
+        {
+          category,
+          brand,
+          query,
+          sort: "relevance",
+        },
+        products,
+      ),
+    [category, brand, query, products],
+  );
+
+  const toStoreAmount = (amount: number) =>
+    convertAmount(amount, currency, storeCurrency, blueVenta);
+
+  const priceBuckets = useMemo(
+    () =>
+      buildPriceBuckets(
+        baseList.map((p) =>
+          convertAmount(p.price, storeCurrency, currency, blueVenta),
+        ),
+        currency,
+      ),
+    [baseList, currency, storeCurrency, blueVenta],
+  );
+
+  const storeMin =
+    minPrice != null ? toStoreAmount(minPrice) : undefined;
+  const storeMax =
+    maxPrice != null ? toStoreAmount(maxPrice) : undefined;
 
   const filtered = useMemo(
     () =>
@@ -93,35 +195,98 @@ export default function CatalogoClient() {
           category,
           brand,
           query,
-          minPrice: selectedPrice.min,
-          maxPrice: selectedPrice.max,
+          minPrice: storeMin,
+          maxPrice: storeMax,
           sort,
         },
         products,
       ),
-    [category, brand, query, selectedPrice, sort, products],
+    [category, brand, query, storeMin, storeMax, sort, products],
   );
 
-  const categories: { id: CategoryId | "all"; label: string }[] = [
-    { id: "all", label: "Todos" },
-    ...Object.entries(categoryLabels).map(([id, label]) => ({
-      id: id as CategoryId,
-      label,
-    })),
-  ];
+  const categories: { id: CategoryId | "all"; label: string }[] = useMemo(() => {
+    const fromStore = storeCategories
+      .filter((c) => c.active)
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((c) => ({ id: c.id, label: c.name }));
+    const list = fromStore.length
+      ? fromStore
+      : Object.entries(categoryLabels).map(([id, label]) => ({
+          id,
+          label,
+        }));
+    return [{ id: "all", label: "Todos" }, ...list];
+  }, [storeCategories]);
+
+  const brandOptions = useMemo(
+    () => [
+      { value: "all", label: "Todas las marcas" },
+      ...brands.map((b) => ({ value: b, label: b })),
+    ],
+    [brands],
+  );
+
+  const priceActive = minPrice != null || maxPrice != null;
 
   const activeFilters =
     (brand !== "all" ? 1 : 0) +
-    (priceStep !== "all" ? 1 : 0) +
+    (priceActive ? 1 : 0) +
     (query.trim() ? 1 : 0) +
     (category !== "all" ? 1 : 0);
 
   const clearFilters = () => {
     setCategory("all");
     setBrand("all");
-    setPriceStep("all");
+    setMinPrice(undefined);
+    setMaxPrice(undefined);
+    setDraftMin("");
+    setDraftMax("");
     setQuery("");
     setSort("relevance");
+    router.push("/catalogo", { scroll: false });
+  };
+
+  const clearPrice = () => {
+    setMinPrice(undefined);
+    setMaxPrice(undefined);
+    setDraftMin("");
+    setDraftMax("");
+  };
+
+  const applyBucket = (bucket: PriceBucket) => {
+    setMinPrice(bucket.min);
+    setMaxPrice(bucket.max);
+    setDraftMin(bucket.min != null ? formatAmount(bucket.min) : "");
+    setDraftMax(bucket.max != null ? formatAmount(bucket.max) : "");
+  };
+
+  const applyCustomRange = () => {
+    const min = parseMoneyDigits(draftMin);
+    const max = parseMoneyDigits(draftMax);
+    if (min != null && max != null && min > max) {
+      setMinPrice(max);
+      setMaxPrice(min);
+      setDraftMin(formatAmount(max));
+      setDraftMax(formatAmount(min));
+      return;
+    }
+    setMinPrice(min ?? undefined);
+    setMaxPrice(max ?? undefined);
+    if (min != null) setDraftMin(formatAmount(min));
+    if (max != null) setDraftMax(formatAmount(max));
+  };
+
+  const isBucketActive = (bucket: PriceBucket) =>
+    minPrice === bucket.min && maxPrice === bucket.max;
+
+  const onCurrencyChange = (next: CurrencyCode) => {
+    if (next === currency) return;
+    setDisplayCurrency(next);
+    // Limpiar rango: los montos están en la moneda anterior
+    setMinPrice(undefined);
+    setMaxPrice(undefined);
+    setDraftMin("");
+    setDraftMax("");
   };
 
   return (
@@ -146,7 +311,7 @@ export default function CatalogoClient() {
                   <button
                     key={cat.id}
                     type="button"
-                    onClick={() => setCategory(cat.id)}
+                    onClick={() => selectCategory(cat.id)}
                     className={`cursor-pointer rounded-lg border-none px-3 py-2.5 text-left text-sm ${
                       active
                         ? "bg-primary-soft font-bold text-primary-dark"
@@ -160,92 +325,135 @@ export default function CatalogoClient() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-border bg-surface p-4">
-            <div className="mb-4 flex items-center justify-between gap-2">
-              <div className="text-[13px] font-bold tracking-wide text-muted uppercase">
-                Filtros
-              </div>
-              {activeFilters > 0 && (
+          <div>
+            <div className="mb-3 flex items-center gap-2">
+              <span className="text-[13px] font-bold tracking-wide text-foreground">
+                Precio
+              </span>
+              <span className="text-border" aria-hidden>
+                |
+              </span>
+              <div className="flex items-center gap-2 text-[13px] font-semibold">
                 <button
                   type="button"
-                  onClick={clearFilters}
-                  className="cursor-pointer border-none bg-transparent text-[12px] font-semibold text-primary"
+                  onClick={() => onCurrencyChange("ARS")}
+                  className={`cursor-pointer border-none bg-transparent p-0 ${
+                    currency === "ARS" ? "text-foreground" : "text-muted-soft"
+                  }`}
+                >
+                  $
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onCurrencyChange("USD")}
+                  className={`cursor-pointer border-none bg-transparent p-0 ${
+                    currency === "USD" ? "text-foreground" : "text-muted-soft"
+                  }`}
+                >
+                  US$
+                </button>
+              </div>
+              {priceActive && (
+                <button
+                  type="button"
+                  onClick={clearPrice}
+                  className="ml-auto cursor-pointer border-none bg-transparent text-[12px] font-semibold text-primary"
                 >
                   Limpiar
                 </button>
               )}
             </div>
 
-            <label className="mb-4 block">
-              <span className="mb-1.5 block text-[12.5px] font-semibold text-foreground">
-                Nombre
-              </span>
-              <input
-                type="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Buscar por nombre, descripción o tags..."
-                className="w-full rounded-lg border border-border bg-accent-soft px-3 py-2.5 text-sm text-foreground outline-none placeholder:text-muted-soft focus:border-primary"
-              />
-            </label>
-
-            <div className="mb-4">
-              <div className="mb-1.5 text-[12.5px] font-semibold text-foreground">
-                Marca
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                <FilterChip
-                  active={brand === "all"}
-                  onClick={() => setBrand("all")}
-                  label="Todas"
-                />
-                {brands.map((b) => (
-                  <FilterChip
-                    key={b}
-                    active={brand === b}
-                    onClick={() => setBrand(b)}
-                    label={b}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <div className="mb-1.5 text-[12.5px] font-semibold text-foreground">
-                Precio
-              </div>
-              <div className="flex flex-col gap-1">
-                {PRICE_STEPS.map((step) => (
+            <div className="mb-3 flex flex-col gap-2">
+              {priceBuckets.map((bucket) => {
+                const count = countInRange(
+                  baseList,
+                  bucket.min != null ? toStoreAmount(bucket.min) : undefined,
+                  bucket.max != null ? toStoreAmount(bucket.max) : undefined,
+                );
+                if (count === 0) return null;
+                const active = isBucketActive(bucket);
+                return (
                   <button
-                    key={step.id}
+                    key={bucket.id}
                     type="button"
-                    onClick={() => setPriceStep(step.id)}
-                    className={`cursor-pointer rounded-lg border px-3 py-2 text-left text-[13px] transition-colors ${
-                      priceStep === step.id
-                        ? "border-primary bg-primary-soft font-semibold text-primary-dark"
-                        : "border-transparent bg-accent-soft font-medium text-body-text hover:border-border"
+                    onClick={() => applyBucket(bucket)}
+                    className={`cursor-pointer border-none bg-transparent p-0 text-left text-[13px] ${
+                      active
+                        ? "font-semibold text-primary"
+                        : "font-medium text-body-text hover:text-primary"
                     }`}
                   >
-                    {step.label}
+                    {bucket.label}{" "}
+                    <span className="font-normal text-muted-soft">
+                      ({count.toLocaleString("es-AR")})
+                    </span>
                   </button>
-                ))}
-              </div>
-              <div className="mt-2 text-[11.5px] text-muted-soft">
-                Catálogo: {formatPrice(priceBounds.min, currency)} –{" "}
-                {formatPrice(priceBounds.max, currency)}
-              </div>
+                );
+              })}
             </div>
+
+            <form
+              className="flex items-center gap-1.5"
+              onSubmit={(e) => {
+                e.preventDefault();
+                applyCustomRange();
+              }}
+            >
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="Mínimo"
+                value={draftMin}
+                onChange={(e) => {
+                  const n = parseMoneyDigits(e.target.value);
+                  setDraftMin(n == null ? "" : formatAmount(n));
+                }}
+                className="min-w-0 flex-1 rounded-md border border-border bg-surface px-2.5 py-2 text-[12.5px] text-foreground outline-none placeholder:text-muted-soft focus:border-primary"
+              />
+              <span className="text-muted-soft" aria-hidden>
+                —
+              </span>
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="Máximo"
+                value={draftMax}
+                onChange={(e) => {
+                  const n = parseMoneyDigits(e.target.value);
+                  setDraftMax(n == null ? "" : formatAmount(n));
+                }}
+                className="min-w-0 flex-1 rounded-md border border-border bg-surface px-2.5 py-2 text-[12.5px] text-foreground outline-none placeholder:text-muted-soft focus:border-primary"
+              />
+              <button
+                type="submit"
+                aria-label="Aplicar rango de precio"
+                className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full border border-border bg-surface text-muted transition-colors hover:border-primary hover:text-primary"
+              >
+                <svg
+                  viewBox="0 0 20 20"
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                >
+                  <path d="M7 4.5 12.5 10 7 15.5" />
+                </svg>
+              </button>
+            </form>
           </div>
 
           <div className="rounded-[10px] bg-primary-softer p-4 text-[12.5px] leading-relaxed text-muted">
-            Precios en pesos, impuestos incluidos. Envío calculado en el
-            checkout.
+            Precios con impuestos incluidos. Envío calculado en el checkout.
           </div>
         </aside>
 
         <div className="min-w-0 flex-1">
-          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="text-sm text-muted">
+          <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="shrink-0 text-sm text-muted">
               <span className="font-semibold text-foreground">
                 {filtered.length}
               </span>{" "}
@@ -257,14 +465,35 @@ export default function CatalogoClient() {
                 </span>
               )}
             </div>
-            <ComboSelect
-              label="Ordenar"
-              value={sort}
-              options={SORT_OPTIONS}
-              onChange={setSort}
-              searchable
-              searchPlaceholder="Buscar orden…"
-            />
+
+            <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2">
+              <ComboSelect
+                value={brand}
+                options={brandOptions}
+                onChange={setBrand}
+                placeholder="Marca"
+                searchPlaceholder="Buscar marca…"
+                searchable
+                className="min-w-[140px] flex-1 sm:flex-none sm:min-w-[150px]"
+              />
+              {activeFilters > 0 && (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="cursor-pointer border-none bg-transparent px-1 text-[12.5px] font-semibold whitespace-nowrap text-primary"
+                >
+                  Limpiar
+                </button>
+              )}
+              <ComboSelect
+                label="Ordenar"
+                value={sort}
+                options={SORT_OPTIONS}
+                onChange={setSort}
+                searchable
+                searchPlaceholder="Buscar orden…"
+              />
+            </div>
           </div>
 
           {filtered.length === 0 ? (
@@ -273,7 +502,7 @@ export default function CatalogoClient() {
                 No hay productos con esos filtros
               </div>
               <div className="mb-5 text-sm text-muted">
-                Probá limpiar marca, precio o la búsqueda por nombre.
+                Probá limpiar marca, precio o la búsqueda.
               </div>
               <button
                 type="button"
@@ -293,29 +522,5 @@ export default function CatalogoClient() {
         </div>
       </div>
     </>
-  );
-}
-
-function FilterChip({
-  active,
-  onClick,
-  label,
-}: {
-  active: boolean;
-  onClick: () => void;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`cursor-pointer rounded-full border px-3 py-1.5 text-[12.5px] font-semibold transition-colors ${
-        active
-          ? "border-primary bg-primary text-white"
-          : "border-border bg-surface text-body-text hover:border-muted-soft"
-      }`}
-    >
-      {label}
-    </button>
   );
 }

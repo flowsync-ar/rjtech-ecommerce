@@ -23,7 +23,7 @@ export function formatAmount(n: number): string {
 }
 
 export function formatPrice(n: number, currency: CurrencyCode = "USD"): string {
-  return `${currencyPrefix(currency)}${formatAmount(n)}`;
+  return `${currencyPrefix(currency)} ${formatAmount(n)}`;
 }
 
 /** Extrae solo dígitos del input y devuelve el número entero. */
@@ -60,15 +60,20 @@ export function stockInfo(product: Product) {
   };
 }
 
-export function productMeta(product: Product, currency: CurrencyCode = "USD") {
+export function productMeta(
+  product: Product,
+  currency: CurrencyCode = "USD",
+  /** Convierte el monto base (USD tienda) a la moneda de visualización. */
+  convert: (amount: number) => number = (n) => n,
+) {
   const discount = discountPct(product);
   const stock = stockInfo(product);
   return {
     categoryLabel: categoryLabels[product.category],
     stars: starsFor(product.rating),
-    fmtPrice: formatPrice(product.price, currency),
+    fmtPrice: formatPrice(convert(product.price), currency),
     fmtOldPrice: product.oldPrice
-      ? formatPrice(product.oldPrice, currency)
+      ? formatPrice(convert(product.oldPrice), currency)
       : null,
     discountPct: discount,
     ...stock,

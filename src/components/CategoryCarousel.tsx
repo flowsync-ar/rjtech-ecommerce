@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { categoryLabels, homeCategoryIds } from "@/lib/products";
@@ -8,8 +9,10 @@ import { useCategoriesStore } from "@/store/categories-store";
 
 /** px por segundo — desplazamiento continuo */
 const SPEED = 42;
+const DRAG_THRESHOLD = 8;
 
 export function CategoryCarousel() {
+  const router = useRouter();
   const storeCategories = useCategoriesStore((s) => s.categories);
 
   const items = useMemo(() => {
@@ -36,10 +39,11 @@ export function CategoryCarousel() {
   const pausedRef = useRef(false);
   const draggingRef = useRef(false);
   const dragRef = useRef({
-    active: false,
+    pointerId: -1,
     startX: 0,
     startScroll: 0,
-    moved: false,
+    dragging: false,
+    suppressClick: false,
   });
   const [dragging, setDragging] = useState(false);
 
@@ -93,40 +97,56 @@ export function CategoryCarousel() {
   }, [items, track.length]);
 
   const onPointerDown = (e: React.PointerEvent) => {
-    const el = scrollerRef.current;
-    if (!el) return;
+    if (e.button !== 0) return;
     dragRef.current = {
-      active: true,
+      pointerId: e.pointerId,
       startX: e.clientX,
-      startScroll: el.scrollLeft,
-      moved: false,
+      startScroll: scrollerRef.current?.scrollLeft ?? 0,
+      dragging: false,
+      suppressClick: false,
     };
-    draggingRef.current = true;
-    setDragging(true);
-    el.setPointerCapture(e.pointerId);
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
     const el = scrollerRef.current;
     const d = dragRef.current;
-    if (!el || !d.active) return;
+    if (!el || d.pointerId !== e.pointerId) return;
+
     const dx = e.clientX - d.startX;
-    if (Math.abs(dx) > 4) d.moved = true;
+    if (!d.dragging) {
+      if (Math.abs(dx) < DRAG_THRESHOLD) return;
+      d.dragging = true;
+      d.suppressClick = true;
+      draggingRef.current = true;
+      setDragging(true);
+      el.setPointerCapture(e.pointerId);
+      pausedRef.current = true;
+    }
+
     el.scrollLeft = d.startScroll - dx;
     normalizeLoop();
   };
 
   const endDrag = (e: React.PointerEvent) => {
     const d = dragRef.current;
-    if (!d.active) return;
-    d.active = false;
+    if (d.pointerId !== e.pointerId) return;
+
+    if (d.dragging) {
+      try {
+        scrollerRef.current?.releasePointerCapture(e.pointerId);
+      } catch {
+        /* ignore */
+      }
+    }
+
     draggingRef.current = false;
     setDragging(false);
-    try {
-      scrollerRef.current?.releasePointerCapture(e.pointerId);
-    } catch {
-      /* ignore */
-    }
+    d.pointerId = -1;
+    d.dragging = false;
+  };
+
+  const goToCategory = (id: string) => {
+    router.push(`/catalogo?categoria=${encodeURIComponent(id)}`);
   };
 
   if (items.length === 0) return null;
@@ -138,7 +158,7 @@ export function CategoryCarousel() {
         pausedRef.current = true;
       }}
       onMouseLeave={() => {
-        pausedRef.current = false;
+        if (!draggingRef.current) pausedRef.current = false;
       }}
     >
       <div className="relative overflow-hidden">
@@ -156,14 +176,17 @@ export function CategoryCarousel() {
           {track.map((cat, i) => (
             <Link
               key={`${cat.id}-${i}`}
-              href={`/catalogo?categoria=${cat.id}`}
+              href={`/catalogo?categoria=${encodeURIComponent(cat.id)}`}
               data-cat-card
               draggable={false}
               onClick={(e) => {
-                if (dragRef.current.moved) {
+                if (dragRef.current.suppressClick) {
                   e.preventDefault();
-                  dragRef.current.moved = false;
+                  dragRef.current.suppressClick = false;
+                  return;
                 }
+                e.preventDefault();
+                goToCategory(cat.id);
               }}
               className="flex w-[118px] shrink-0 cursor-pointer flex-col items-center gap-2.5 rounded-xl border border-border bg-surface px-2 py-[18px] no-underline transition-colors hover:border-muted-soft hover:bg-accent-soft hover:!no-underline sm:w-[132px]"
             >

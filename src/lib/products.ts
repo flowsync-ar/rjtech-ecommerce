@@ -22,6 +22,14 @@ export type Product = {
   featured: boolean;
 };
 
+/** Ruta canónica de ficha: /producto/{categoria}/{id} */
+export function productHref(
+  product: Pick<Product, "id" | "category">,
+): string {
+  const cat = encodeURIComponent(product.category || "productos");
+  return `/producto/${cat}/${product.id}`;
+}
+
 export const categoryLabels: Record<string, string> = {
   celulares: "Celulares",
   notebooks: "Notebooks",

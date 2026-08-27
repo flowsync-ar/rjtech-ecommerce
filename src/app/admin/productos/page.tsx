@@ -7,7 +7,7 @@ import { ComboSelect } from "@/components/ComboSelect";
 import { MultiImageUploader } from "@/components/MultiImageUploader";
 import { MoneyInput } from "@/components/MoneyInput";
 import { ProductImage } from "@/components/ProductImage";
-import { useCurrency } from "@/hooks/useCurrency";
+import { useStoreCurrency } from "@/hooks/useCurrency";
 import { useDialog } from "@/components/DialogProvider";
 import {
   categoryLabels,
@@ -57,7 +57,7 @@ const emptyForm = {
 type Panel = "none" | "form" | "bulk" | "images";
 
 export default function AdminProductosPage() {
-  const { currency: storeCurrency, formatPrice } = useCurrency();
+  const { currency: storeCurrency, formatPrice } = useStoreCurrency();
   const updateConfig = useStoreConfig((s) => s.updateConfig);
   const { confirm, notice } = useDialog();
   const products = useCatalogStore((s) => s.products);

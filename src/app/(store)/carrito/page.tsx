@@ -11,7 +11,7 @@ import { useCatalogStore } from "@/store/catalog-store";
 import { useCheckoutStore } from "@/store/checkout-store";
 
 export default function CarritoPage() {
-  const { currency, formatPrice } = useCurrency();
+  const { currency, formatPrice, toDisplay } = useCurrency();
   const items = useCartStore((s) => s.items);
   const products = useCatalogStore((s) => s.products);
   const changeQty = useCartStore((s) => s.changeQty);
@@ -38,7 +38,7 @@ export default function CarritoPage() {
             {items.map((c) => {
               const product = products.find((p) => p.id === c.id);
               if (!product) return null;
-              const meta = productMeta(product, currency);
+              const meta = productMeta(product, currency, toDisplay);
               return (
                 <div
                   key={c.id}

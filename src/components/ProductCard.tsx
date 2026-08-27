@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { Product } from "@/lib/products";
+import { productHref } from "@/lib/products";
 import { productMeta } from "@/lib/format";
 import { useCurrency } from "@/hooks/useCurrency";
 import { ProductImage } from "./ProductImage";
@@ -12,13 +13,13 @@ type Props = {
 };
 
 export function ProductCard({ product, variant = "default" }: Props) {
-  const { currency } = useCurrency();
-  const meta = productMeta(product, currency);
+  const { currency, toDisplay } = useCurrency();
+  const meta = productMeta(product, currency, toDisplay);
   const isCompact = variant === "compact";
 
   return (
     <Link
-      href={`/producto/${product.id}`}
+      href={productHref(product)}
       className="flex flex-col overflow-hidden rounded-xl border border-border bg-surface no-underline transition-shadow hover:shadow-sm hover:no-underline!"
     >
       <ProductImage
