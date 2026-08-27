@@ -19,7 +19,7 @@ type AuthState = {
     email: string,
     password: string,
   ) => Promise<{ ok: true } | { ok: false; error: string }>;
-  loginWithGoogle: () => Promise<void>;
+  loginWithGoogle: (returnTo?: string) => Promise<void>;
   logout: () => Promise<void>;
   /** Called by bootstrap / admin after session changes */
   setUserFromSession: (user: User | null) => void;
@@ -106,12 +106,16 @@ export const useAuthStore = create<AuthState>((set) => ({
     notifySession(data.user);
     return { ok: true };
   },
-  loginWithGoogle: async () => {
+  loginWithGoogle: async (returnTo) => {
     const supabase = createClient();
+    const next =
+      returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//")
+        ? returnTo
+        : "/cuenta";
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/cuenta`,
+        redirectTo: `${window.location.origin}/cuenta?next=${encodeURIComponent(next)}`,
       },
     });
     if (error) throw error;

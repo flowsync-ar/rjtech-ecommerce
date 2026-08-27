@@ -1,4 +1,3 @@
-import { BrandLogo } from "@/components/BrandLogo";
 import { whatsappHref } from "@/lib/social";
 
 /** Editá estos links con las cuentas reales de RJ Tech. */
@@ -23,45 +22,47 @@ const SOCIAL_LINKS = [
     label: "WhatsApp",
     href: whatsappHref(),
   },
- 
 ] as const;
 
 export function Footer() {
   return (
     <footer className="mt-5 border-t border-border bg-surface">
       <div className="mx-auto grid max-w-[1280px] grid-cols-2 gap-8 px-6 py-10 md:grid-cols-4 md:px-10">
-        <div className="col-span-2 md:col-span-1">
-          <div className="mb-3">
-            <BrandLogo size="lg" />
-          </div>
-          <p className="max-w-[260px] text-[13px] leading-relaxed text-muted">
+        <div>
+          <div className="mb-2.5 text-[12.5px] font-bold">Seguinos</div>
+          <p className="mb-3 max-w-[220px] text-[13px] leading-relaxed text-muted">
             MacBooks, celulares, drones y más — con precios claros y stock real.
           </p>
-          <div className="mt-5">
-            <div className="mb-2.5 text-[12.5px] font-bold">Seguinos</div>
-            <div className="flex flex-wrap gap-2">
-              {SOCIAL_LINKS.map((social) => (
-                <a
-                  key={social.id}
-                  href={social.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={`Seguinos en ${social.label}`}
-                  title={social.label}
-                  className="inline-flex size-9 items-center justify-center rounded-lg border border-border bg-background text-muted no-underline transition-colors hover:border-primary hover:text-primary hover:!no-underline"
-                >
-                  <SocialIcon id={social.id} />
-                </a>
-              ))}
-            </div>
+          <div className="flex flex-wrap gap-2">
+            {SOCIAL_LINKS.map((social) => (
+              <a
+                key={social.id}
+                href={social.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Seguinos en ${social.label}`}
+                title={social.label}
+                className="inline-flex size-9 items-center justify-center rounded-lg border border-border bg-background text-muted no-underline transition-colors hover:border-primary hover:text-primary hover:!no-underline"
+              >
+                <SocialIcon id={social.id} />
+              </a>
+            ))}
           </div>
         </div>
         <div>
           <div className="mb-2.5 text-[12.5px] font-bold">Ayuda</div>
           <div className="flex flex-col gap-2 text-[13px] text-muted">
-            <span>Soporte</span>
+            <a
+              href="/contacto"
+              className="text-muted no-underline hover:text-primary hover:!no-underline"
+            >
+              Contacto
+            </a>
             <span>Envíos</span>
-            <a href="/admin" className="text-muted no-underline hover:text-primary hover:!no-underline">
+            <a
+              href="/admin"
+              className="text-muted no-underline hover:text-primary hover:!no-underline"
+            >
               Admin
             </a>
           </div>
@@ -75,7 +76,12 @@ export function Footer() {
             >
               Sobre nosotros
             </a>
-            <span>Sucursales</span>
+            <a
+              href="/marcas"
+              className="text-muted no-underline hover:text-primary hover:!no-underline"
+            >
+              Marcas
+            </a>
             <span>Trabajá con nosotros</span>
           </div>
         </div>

@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { AdminFormModal } from "@/components/admin/AdminFormModal";
 import { useDialog } from "@/components/DialogProvider";
 import {
   slugifyCategoryId,
@@ -34,6 +35,11 @@ export default function AdminCategoriasPage() {
         c.name.toLowerCase().includes(q) || c.id.toLowerCase().includes(q),
     );
   }, [categories, query]);
+
+  const closeForm = useCallback(() => {
+    setOpen(false);
+    setEditing(null);
+  }, []);
 
   const openCreate = () => {
     setEditing(null);
@@ -69,8 +75,7 @@ export default function AdminCategoriasPage() {
           sortOrder: Number(sortOrder) || 0,
         });
       }
-      setOpen(false);
-      setEditing(null);
+      closeForm();
     } catch (err) {
       void notice({
         title: "No se pudo guardar",
@@ -103,68 +108,66 @@ export default function AdminCategoriasPage() {
         className={`${inputClass} mb-5 max-w-md`}
       />
 
-      {open && (
-        <form
-          onSubmit={onSave}
-          className="mb-6 rounded-xl border border-border bg-surface p-5"
-        >
-          <div className="mb-4 text-sm font-bold">
-            {editing ? `Editar ${editing.id}` : "Nueva categoría"}
-          </div>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <input
-              className={inputClass}
-              placeholder="Nombre (ej. Celulares)"
-              value={name}
-              onChange={(e) => {
-                setName(e.target.value);
-                if (!editing) setId(slugifyCategoryId(e.target.value));
-              }}
-              required
-            />
-            <input
-              className={inputClass}
-              placeholder="Id / slug (ej. celulares)"
-              value={id}
-              onChange={(e) => setId(slugifyCategoryId(e.target.value))}
-              required
-              disabled={Boolean(editing)}
-            />
-            <input
-              className={inputClass}
-              placeholder="Orden"
-              type="number"
-              value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value)}
-            />
-            {editing && (
-              <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold">
-                <input
-                  type="checkbox"
-                  checked={active}
-                  onChange={(e) => setActive(e.target.checked)}
-                />
-                Activa
-              </label>
-            )}
-          </div>
-          <div className="mt-4 flex gap-2">
-            <button
-              type="submit"
-              className="cursor-pointer rounded-lg border-none bg-primary px-4 py-2.5 text-sm font-bold !text-white"
-            >
-              Guardar
-            </button>
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              className="cursor-pointer rounded-lg border border-border bg-transparent px-4 py-2.5 text-sm font-semibold"
-            >
-              Cancelar
-            </button>
-          </div>
-        </form>
-      )}
+      <AdminFormModal
+        open={open}
+        title={editing ? `Editar ${editing.id}` : "Nueva categoría"}
+        onClose={closeForm}
+        onSubmit={onSave}
+        maxWidth="xl"
+      >
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <input
+            className={inputClass}
+            placeholder="Nombre (ej. Celulares)"
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value);
+              if (!editing) setId(slugifyCategoryId(e.target.value));
+            }}
+            required
+          />
+          <input
+            className={inputClass}
+            placeholder="Id / slug (ej. celulares)"
+            value={id}
+            onChange={(e) => setId(slugifyCategoryId(e.target.value))}
+            required
+            disabled={Boolean(editing)}
+          />
+          <input
+            className={inputClass}
+            placeholder="Orden"
+            type="number"
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value)}
+          />
+          {editing && (
+            <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold">
+              <input
+                type="checkbox"
+                checked={active}
+                onChange={(e) => setActive(e.target.checked)}
+              />
+              Activa
+            </label>
+          )}
+        </div>
+        <div className="mt-4 flex gap-2">
+          <button
+            type="submit"
+            className="cursor-pointer rounded-lg border-none bg-primary px-4 py-2.5 text-sm font-bold !text-white"
+          >
+            Guardar
+          </button>
+          <button
+            type="button"
+            onClick={closeForm}
+            className="cursor-pointer rounded-lg border border-border bg-transparent px-4 py-2.5 text-sm font-semibold"
+          >
+            Cancelar
+          </button>
+        </div>
+      </AdminFormModal>
 
       <div className="overflow-hidden rounded-xl border border-border bg-surface">
         <div className="hidden grid-cols-[80px_1fr_120px_100px_140px] gap-3 bg-primary-softer px-4 py-3 text-xs font-bold text-muted uppercase md:grid">
@@ -185,13 +188,15 @@ export default function AdminCategoriasPage() {
             <div className={c.active ? "text-success" : "text-sale"}>
               {c.active ? "Activa" : "Inactiva"}
             </div>
-            <div className="flex gap-2 md:justify-end">
+            <div className="flex gap-1.5 md:justify-end">
               <button
                 type="button"
                 onClick={() => openEdit(c)}
-                className="cursor-pointer rounded-md border border-border px-2.5 py-1.5 text-[12.5px] font-semibold"
+                aria-label={`Editar ${c.name}`}
+                title="Editar"
+                className="inline-flex size-8 cursor-pointer items-center justify-center rounded-lg border border-border bg-surface text-foreground hover:bg-accent-soft"
               >
-                Editar
+                <EditIcon />
               </button>
               <button
                 type="button"
@@ -215,14 +220,51 @@ export default function AdminCategoriasPage() {
                     }
                   })();
                 }}
-                className="cursor-pointer rounded-md border-none bg-transparent px-2.5 py-1.5 text-[12.5px] font-semibold text-sale"
+                aria-label={`Eliminar ${c.name}`}
+                title="Eliminar"
+                className="inline-flex size-8 cursor-pointer items-center justify-center rounded-lg border border-border bg-surface text-sale hover:bg-danger-soft"
               >
-                Borrar
+                <TrashIcon />
               </button>
             </div>
           </div>
         ))}
       </div>
     </div>
+  );
+}
+
+function iconProps() {
+  return {
+    width: 15,
+    height: 15,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 2,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    "aria-hidden": true as const,
+  };
+}
+
+function EditIcon() {
+  return (
+    <svg {...iconProps()}>
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+    </svg>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg {...iconProps()}>
+      <path d="M3 6h18" />
+      <path d="M8 6V4h8v2" />
+      <path d="M19 6l-1 14H6L5 6" />
+      <path d="M10 11v6" />
+      <path d="M14 11v6" />
+    </svg>
   );
 }

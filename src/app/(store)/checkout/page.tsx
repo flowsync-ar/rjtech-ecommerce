@@ -1,10 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { CheckoutLoginForm } from "@/components/CheckoutLoginForm";
 import { useDialog } from "@/components/DialogProvider";
 import { OrderSummary } from "@/components/OrderSummary";
 import { useCurrency } from "@/hooks/useCurrency";
+import { useAuthStore } from "@/store/auth-store";
 import { useCartStore } from "@/store/cart-store";
 import { useCatalogStore } from "@/store/catalog-store";
 import {
@@ -26,7 +29,7 @@ const paymentDefs: {
   {
     id: "transfer",
     label: "Transferencia bancaria",
-    desc: "Acreditación en 24hs",
+    desc: "Acreditación hasta 24hs",
   },
 ];
 
@@ -40,6 +43,7 @@ export default function CheckoutPage() {
   const { notice } = useDialog();
   const router = useRouter();
   const { formatPrice } = useCurrency();
+  const user = useAuthStore((s) => s.user);
   const items = useCartStore((s) => s.items);
   const products = useCatalogStore((s) => s.products);
   const clearCart = useCartStore((s) => s.clearCart);
@@ -47,12 +51,34 @@ export default function CheckoutPage() {
     step,
     payment,
     orderConfirmed,
+    placing,
     shipping,
     setStep,
     setPayment,
     setShipping,
     confirmOrder,
+    resetCheckout,
   } = useCheckoutStore();
+
+  const [showLogin, setShowLogin] = useState(false);
+
+  useEffect(() => {
+    if (user) setShowLogin(false);
+  }, [user]);
+
+  const placeOrder = async () => {
+    const result = await confirmOrder();
+    if (!result.ok) {
+      if (result.needsAuth) {
+        setShowLogin(true);
+        return;
+      }
+      void notice({
+        title: "No se pudo confirmar",
+        message: result.error ?? "Error al confirmar la compra",
+      });
+    }
+  };
 
   if (items.length === 0 && !orderConfirmed) {
     return (
@@ -182,7 +208,10 @@ export default function CheckoutPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setStep(3)}
+                  onClick={() => {
+                    setShowLogin(false);
+                    setStep(3);
+                  }}
                   className="cursor-pointer rounded-[9px] border-none bg-primary px-6 py-3.5 text-[14.5px] font-bold text-white"
                 >
                   Continuar
@@ -206,6 +235,7 @@ export default function CheckoutPage() {
                   type="button"
                   onClick={() => {
                     void clearCart();
+                    resetCheckout();
                     router.push("/cuenta");
                   }}
                   className="cursor-pointer rounded-[9px] border-none bg-primary px-[22px] py-3 text-sm font-bold text-white"
@@ -237,30 +267,42 @@ export default function CheckoutPage() {
                     );
                   })}
                 </div>
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setStep(2)}
-                    className="cursor-pointer rounded-[9px] border border-border bg-transparent px-6 py-3.5 text-[14.5px] font-semibold"
-                  >
-                    Volver
-                  </button>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      const result = await confirmOrder();
-                      if (!result.ok) {
-                        void notice({
-                          title: "No se pudo confirmar",
-                          message: result.error ?? "Error al confirmar la compra",
-                        });
-                      }
+
+                {showLogin && !user ? (
+                  <CheckoutLoginForm
+                    onCancel={() => setShowLogin(false)}
+                    onSuccess={() => {
+                      void placeOrder();
                     }}
-                    className="cursor-pointer rounded-[9px] border-none bg-success px-6 py-3.5 text-[14.5px] font-bold text-white"
-                  >
-                    Confirmar compra
-                  </button>
-                </div>
+                  />
+                ) : (
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowLogin(false);
+                        setStep(2);
+                      }}
+                      className="cursor-pointer rounded-[9px] border border-border bg-transparent px-6 py-3.5 text-[14.5px] font-semibold"
+                    >
+                      Volver
+                    </button>
+                    <button
+                      type="button"
+                      disabled={placing}
+                      onClick={() => {
+                        if (!user) {
+                          setShowLogin(true);
+                          return;
+                        }
+                        void placeOrder();
+                      }}
+                      className="cursor-pointer rounded-[9px] border-none bg-success px-6 py-3.5 text-[14.5px] font-bold text-white disabled:opacity-60"
+                    >
+                      Confirmar compra
+                    </button>
+                  </div>
+                )}
               </>
             ))}
         </div>

@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { AdminFormModal } from "@/components/admin/AdminFormModal";
 import { useDialog } from "@/components/DialogProvider";
+import { formatPhoneDisplay } from "@/lib/format";
 import {
   useProvidersStore,
   type Provider,
@@ -44,6 +46,12 @@ export default function AdminProveedoresPage() {
     );
   }, [providers, query]);
 
+  const closeForm = useCallback(() => {
+    setOpen(false);
+    setEditing(null);
+    setForm(emptyForm);
+  }, []);
+
   const openCreate = () => {
     setEditing(null);
     setForm(emptyForm);
@@ -76,9 +84,7 @@ export default function AdminProveedoresPage() {
     try {
       if (editing) await updateProvider(editing.id, payload);
       else await addProvider(payload);
-      setOpen(false);
-      setEditing(null);
-      setForm(emptyForm);
+      closeForm();
     } catch (err) {
       void notice({
         title: "No se pudo guardar",
@@ -113,72 +119,70 @@ export default function AdminProveedoresPage() {
         className={`${inputClass} mb-5 max-w-md`}
       />
 
-      {open && (
-        <form
-          onSubmit={onSave}
-          className="mb-6 rounded-xl border border-border bg-surface p-5"
-        >
-          <div className="mb-4 text-sm font-bold">
-            {editing ? "Editar proveedor" : "Nuevo proveedor"}
-          </div>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <input
-              className={inputClass}
-              placeholder="Nombre comercial"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              required
-            />
-            <input
-              className={inputClass}
-              placeholder="Contacto"
-              value={form.contact}
-              onChange={(e) => setForm({ ...form, contact: e.target.value })}
-              required
-            />
-            <input
-              className={inputClass}
-              placeholder="Email (opcional)"
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-            />
-            <input
-              className={inputClass}
-              placeholder="Teléfono"
-              value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
-            />
-            <input
-              className={`${inputClass} md:col-span-2`}
-              placeholder="Dirección"
-              value={form.address}
-              onChange={(e) => setForm({ ...form, address: e.target.value })}
-            />
-            <textarea
-              className={`${inputClass} min-h-[80px] md:col-span-2`}
-              placeholder="Notas"
-              value={form.notes}
-              onChange={(e) => setForm({ ...form, notes: e.target.value })}
-            />
-          </div>
-          <div className="mt-4 flex gap-2">
-            <button
-              type="submit"
-              className="cursor-pointer rounded-lg border-none bg-primary px-4 py-2.5 text-sm font-bold !text-white"
-            >
-              Guardar
-            </button>
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              className="cursor-pointer rounded-lg border border-border bg-transparent px-4 py-2.5 text-sm font-semibold"
-            >
-              Cancelar
-            </button>
-          </div>
-        </form>
-      )}
+      <AdminFormModal
+        open={open}
+        title={editing ? "Editar proveedor" : "Nuevo proveedor"}
+        onClose={closeForm}
+        onSubmit={onSave}
+        maxWidth="2xl"
+      >
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <input
+            className={inputClass}
+            placeholder="Nombre comercial"
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            required
+          />
+          <input
+            className={inputClass}
+            placeholder="Contacto"
+            value={form.contact}
+            onChange={(e) => setForm({ ...form, contact: e.target.value })}
+            required
+          />
+          <input
+            className={inputClass}
+            placeholder="Email (opcional)"
+            type="email"
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+          />
+          <input
+            className={inputClass}
+            placeholder="Teléfono"
+            value={form.phone}
+            onChange={(e) => setForm({ ...form, phone: e.target.value })}
+          />
+          <input
+            className={`${inputClass} md:col-span-2`}
+            placeholder="Dirección"
+            value={form.address}
+            onChange={(e) => setForm({ ...form, address: e.target.value })}
+          />
+          <textarea
+            className={`${inputClass} min-h-[80px] md:col-span-2`}
+            placeholder="Notas"
+            value={form.notes}
+            onChange={(e) => setForm({ ...form, notes: e.target.value })}
+          />
+        </div>
+        <div className="mt-4 flex gap-2">
+          <button
+            type="submit"
+            className="cursor-pointer rounded-lg border-none bg-primary px-4 py-2.5 text-sm font-bold !text-white"
+          >
+            Guardar
+          </button>
+          <button
+            type="button"
+            onClick={closeForm}
+            className="cursor-pointer rounded-lg border border-border bg-transparent px-4 py-2.5 text-sm font-semibold"
+          >
+            Cancelar
+          </button>
+        </div>
+      </AdminFormModal>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {filtered.map((p) => (
@@ -190,10 +194,15 @@ export default function AdminProveedoresPage() {
             <div className="space-y-1 text-sm text-muted">
               <div>
                 <span className="font-medium text-foreground">Contacto:</span>{" "}
-                {p.contact}
+                {formatPhoneDisplay(p.contact)}
               </div>
               {p.email && <div>{p.email}</div>}
-              {p.phone && <div>{p.phone}</div>}
+              {p.phone && (
+                <div>
+                  <span className="font-medium text-foreground">Teléfono:</span>{" "}
+                  {formatPhoneDisplay(p.phone)}
+                </div>
+              )}
               {p.address && (
                 <div>
                   <span className="font-medium text-foreground">Dirección:</span>{" "}

@@ -1,21 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { CurrencyToggle } from "@/components/CurrencyToggle";
+import { HeaderSearch } from "@/components/HeaderSearch";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuthStore } from "@/store/auth-store";
 import { useCartStore } from "@/store/cart-store";
 
 export function Header() {
   const pathname = usePathname();
-  const router = useRouter();
   const cartCount = useCartStore((s) => s.cartCount());
   const user = useAuthStore((s) => s.user);
   const [mounted, setMounted] = useState(false);
-  const [search, setSearch] = useState("");
 
   useEffect(() => setMounted(true), []);
 
@@ -26,23 +25,19 @@ export function Header() {
     : "Iniciar sesión";
   const isHome = pathname === "/";
   const isCatalog = pathname.startsWith("/catalogo");
+  const isMarcas = pathname.startsWith("/marcas");
   const isNosotros = pathname.startsWith("/nosotros");
-
-  const onSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    const q = search.trim();
-    router.push(q ? `/catalogo?q=${encodeURIComponent(q)}` : "/catalogo");
-  };
+  const isContacto = pathname.startsWith("/contacto");
 
   return (
-    <header className="sticky top-0 z-20 border-b border-border bg-surface/95 backdrop-blur-md">
-      <div className="flex min-h-[104px] items-center gap-4 px-4 py-2.5 sm:gap-6 md:min-h-[120px] md:px-10 md:py-3">
-        <BrandLogo size="md" />
+    <header className="sticky top-0 z-30 border-b border-border bg-surface/95 backdrop-blur-md">
+      <div className="flex min-h-[104px] items-center gap-4 py-2.5 pr-4 pl-1.5 sm:gap-6 md:min-h-[120px] md:py-3 md:pr-10 md:pl-2">
+        <BrandLogo size="md" className="-ml-1 md:-ml-1.5" />
 
-        <nav className="hidden items-center gap-1 sm:flex">
+        <nav className="hidden items-center gap-0.5 md:flex xl:gap-1">
           <Link
             href="/"
-            className={`rounded-md px-3 py-2 text-sm font-semibold no-underline hover:!no-underline ${
+            className={`rounded-md px-2.5 py-2 text-sm font-semibold no-underline hover:!no-underline xl:px-3 ${
               isHome ? "text-primary" : "text-foreground"
             }`}
           >
@@ -50,34 +45,39 @@ export function Header() {
           </Link>
           <Link
             href="/catalogo"
-            className={`rounded-md px-3 py-2 text-sm font-semibold no-underline hover:!no-underline ${
+            className={`rounded-md px-2.5 py-2 text-sm font-semibold no-underline hover:!no-underline xl:px-3 ${
               isCatalog ? "text-primary" : "text-foreground"
             }`}
           >
             Catálogo
           </Link>
           <Link
+            href="/marcas"
+            className={`rounded-md px-2.5 py-2 text-sm font-semibold no-underline hover:!no-underline xl:px-3 ${
+              isMarcas ? "text-primary" : "text-foreground"
+            }`}
+          >
+            Marcas
+          </Link>
+          <Link
             href="/nosotros"
-            className={`rounded-md px-3 py-2 text-sm font-semibold no-underline hover:!no-underline ${
+            className={`rounded-md px-2.5 py-2 text-sm font-semibold no-underline hover:!no-underline xl:px-3 ${
               isNosotros ? "text-primary" : "text-foreground"
             }`}
           >
             Nosotros
           </Link>
+          <Link
+            href="/contacto"
+            className={`rounded-md px-2.5 py-2 text-sm font-semibold no-underline hover:!no-underline xl:px-3 ${
+              isContacto ? "text-primary" : "text-foreground"
+            }`}
+          >
+            Contacto
+          </Link>
         </nav>
 
-        <form
-          onSubmit={onSearch}
-          className="ml-2 hidden max-w-[440px] flex-1 md:block"
-        >
-          <input
-            type="search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar productos, marcas, tags..."
-            className="w-full rounded-lg border border-border bg-accent-soft px-4 py-2.5 text-sm text-foreground outline-none placeholder:text-muted-soft focus:border-primary"
-          />
-        </form>
+        <HeaderSearch />
 
         <div className="flex-1" />
 

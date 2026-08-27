@@ -34,7 +34,7 @@ type ConfigState = {
 const defaultConfig: StoreConfig = {
   storeName: "RJ Tech",
   tagline: "Tecnología • Innovación • Tu mundo",
-  supportEmail: "soporte@rjtech.com",
+  supportEmail: "rjtech.lp@gmail.com",
   supportPhone: "+54 11 4000-1234",
   currency: "USD",
   freeShippingFrom: 500000,

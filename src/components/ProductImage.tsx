@@ -12,6 +12,7 @@ type Props = {
   priority?: boolean;
   /** next/image `sizes` — defaults for catalog cards */
   sizes?: string;
+  showDiscount?: boolean;
 };
 
 export function ProductImage({
@@ -20,6 +21,7 @@ export function ProductImage({
   className = "",
   priority = false,
   sizes = "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw",
+  showDiscount = true,
 }: Props) {
   const meta = productMeta(product);
   const alt = label ?? product.name;
@@ -29,7 +31,7 @@ export function ProductImage({
     <div
       className={`relative flex items-center justify-center overflow-hidden bg-white font-mono text-[11px] text-muted-soft ${className}`}
     >
-      {meta.discountPct != null && (
+      {showDiscount && meta.discountPct != null && (
         <span className="absolute top-2.5 left-2.5 z-10 rounded-md bg-sale px-2 py-0.5 text-[11px] font-bold text-white">
           -{meta.discountPct}%
         </span>

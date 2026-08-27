@@ -97,3 +97,53 @@ export function calcShipping(subtotal: number) {
   if (subtotal === 0 || subtotal > 500000) return 0;
   return 15000;
 }
+
+/** Agrupa dígitos de a 3: "273935095" → "273 935 095". */
+function groupPhoneDigits(digits: string): string {
+  const parts: string[] = [];
+  for (let i = 0; i < digits.length; i += 3) {
+    parts.push(digits.slice(i, i + 3));
+  }
+  return parts.join(" ");
+}
+
+/**
+ * Formato de teléfono AR para display: (011) 273 935 095
+ * Si no parece un número (p.ej. un nombre de contacto), lo deja igual.
+ */
+export function formatPhoneDisplay(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+
+  let digits = trimmed.replace(/\D/g, "");
+  if (digits.length < 6) return trimmed;
+
+  // +54 / 54 país
+  if (digits.startsWith("54") && digits.length >= 12) {
+    digits = digits.slice(2);
+  }
+  // 9 de móvil internacional (54911…)
+  if (digits.startsWith("9") && digits.length >= 11) {
+    digits = digits.slice(1);
+  }
+
+  let area = "";
+  let local = digits;
+
+  if (digits.startsWith("011")) {
+    area = "011";
+    local = digits.slice(3);
+  } else if (digits.startsWith("0") && digits.length >= 10) {
+    // Códigos de área de 4 dígitos: 0221, 0341, etc.
+    area = digits.slice(0, 4);
+    local = digits.slice(4);
+  } else if (!digits.startsWith("0") && digits.length >= 8) {
+    // Sin 0: 11XXXXXXXX → (11) …
+    area = digits.slice(0, 2);
+    local = digits.slice(2);
+  }
+
+  if (!area) return groupPhoneDigits(digits);
+  if (!local) return `(${area})`;
+  return `(${area}) ${groupPhoneDigits(local)}`;
+}

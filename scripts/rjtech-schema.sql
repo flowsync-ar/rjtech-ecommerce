@@ -103,6 +103,7 @@ create table if not exists public.rjtech_brands (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   active boolean not null default true,
+  logo_url text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint rjtech_brands_name_unique unique (name)

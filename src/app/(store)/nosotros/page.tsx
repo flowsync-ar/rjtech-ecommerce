@@ -10,12 +10,12 @@ export const metadata: Metadata = {
 export default function NosotrosPage() {
   return (
     <div className="-mx-6 md:-mx-10">
-      {/* HERO */}
-      <section className="relative overflow-hidden border-b border-border">
+      {/* HERO — ocupa el primer viewport para no “filtrar” la sección siguiente */}
+      <section className="relative flex min-h-[calc(100dvh-104px)] flex-col justify-center overflow-hidden border-b border-border md:min-h-[calc(100dvh-120px)]">
         <div className="rj-hero-glow absolute inset-0 bg-[radial-gradient(ellipse_at_20%_20%,color-mix(in_oklch,var(--primary)_28%,transparent),transparent_55%),radial-gradient(ellipse_at_85%_10%,color-mix(in_oklch,var(--primary)_16%,transparent),transparent_45%),linear-gradient(160deg,var(--background),var(--surface))]" />
         <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-background to-transparent" />
 
-        <div className="relative mx-auto max-w-[1280px] px-6 pt-14 pb-16 md:px-10 md:pt-20 md:pb-24">
+        <div className="relative mx-auto w-full max-w-[1280px] px-6 py-16 md:px-10 md:py-20">
           <p className="rj-fade-up mb-4 text-[13px] font-bold tracking-[0.18em] text-primary uppercase">
             RJ Tech · Santa Rosa, La Pampa
           </p>
@@ -42,11 +42,33 @@ export default function NosotrosPage() {
             </a>
           </div>
         </div>
+
+        <a
+          href="#historia"
+          aria-label="Ir a Quiénes somos"
+          className="rj-fade-in absolute bottom-6 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-1 text-muted no-underline hover:text-primary hover:!no-underline"
+        >
+          <span className="text-[11px] font-semibold tracking-wider uppercase">
+            Seguí
+          </span>
+          <svg
+            viewBox="0 0 24 24"
+            className="h-5 w-5 animate-bounce"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.75"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </a>
       </section>
 
       {/* HISTORIA */}
-      <section className="mx-auto grid max-w-[1280px] gap-10 px-6 py-16 md:grid-cols-2 md:items-center md:gap-16 md:px-10 md:py-24">
-        <div>
+      <section className="mx-auto max-w-[1280px] px-6 py-16 md:px-10 md:py-24">
+        <div className="max-w-[40rem]">
           <p
             id="historia"
             className="mb-3 scroll-mt-[120px] text-[13px] font-bold tracking-wider text-primary uppercase md:scroll-mt-[136px]"
@@ -75,20 +97,6 @@ export default function NosotrosPage() {
               con cara y nombre, que responde por chat y te acompaña después de
               la compra.
             </p>
-          </div>
-        </div>
-
-        <div className="relative min-h-[320px] overflow-hidden rounded-[20px] border border-border bg-surface md:min-h-[420px]">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_40%,color-mix(in_oklch,var(--primary)_35%,transparent),transparent_50%),linear-gradient(145deg,var(--primary-soft),var(--surface)_55%,var(--accent-soft))]" />
-          <div className="absolute inset-0 opacity-40 [background-image:linear-gradient(rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.06)_1px,transparent_1px)] [background-size:28px_28px] dark:opacity-25" />
-          <div className="relative flex h-full min-h-[320px] flex-col justify-end p-7 md:min-h-[420px] md:p-9">
-            <div className="mb-3 text-[12px] font-bold tracking-[0.14em] text-primary uppercase">
-              Desde La Pampa para todo el país
-            </div>
-            <div className="max-w-[18rem] text-[22px] leading-snug font-bold text-foreground md:text-[26px]">
-              Misma pasión por un iPhone nuevo que por un tip de configuración
-              a las 22 hs.
-            </div>
           </div>
         </div>
       </section>
@@ -144,10 +152,7 @@ export default function NosotrosPage() {
             Santa Rosa, La Pampa.
           </h2>
           <p className="mb-8 max-w-[36rem] text-[15px] leading-relaxed text-body-text md:text-base">
-            Acá late RJ Tech: entre avenidas anchas, mate a cualquier hora y
-            la certeza de que la tecnología también puede sentirse local.
-            Enviamos a todo el país, pero el corazón —y el depósito— están en
-            Santa Rosa.
+          Nuestra base está en Santa Rosa, pero llegamos mucho más lejos. Desde La Pampa llevamos tecnología a todo el país, combinando buenos productos, atención cercana y una experiencia de compra simple.
           </p>
           <div className="flex flex-wrap gap-x-10 gap-y-4 text-sm">
             <div>

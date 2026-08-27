@@ -37,12 +37,7 @@ export default function HomePage() {
             >
               Ver catálogo
             </Link>
-            <Link
-              href="/catalogo"
-              className="text-[14.5px] font-semibold"
-            >
-              Ver financiamiento en cuotas →
-            </Link>
+           
           </div>
         </div>
         <div className="relative h-[280px] w-full min-w-0 flex-1 overflow-hidden rounded-2xl md:h-[340px]">

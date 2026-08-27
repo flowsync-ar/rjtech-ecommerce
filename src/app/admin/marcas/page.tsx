@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { AdminFormModal } from "@/components/admin/AdminFormModal";
 import { useDialog } from "@/components/DialogProvider";
+import { ImageUploader } from "@/components/ImageUploader";
 import { useBrandsStore, type Brand } from "@/store/brands-store";
 
 const inputClass =
@@ -17,6 +19,7 @@ export default function AdminMarcasPage() {
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<Brand | null>(null);
   const [name, setName] = useState("");
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [active, setActive] = useState(true);
   const [open, setOpen] = useState(false);
 
@@ -26,9 +29,17 @@ export default function AdminMarcasPage() {
     return brands.filter((b) => b.name.toLowerCase().includes(q));
   }, [brands, query]);
 
+  const closeForm = useCallback(() => {
+    setOpen(false);
+    setEditing(null);
+    setName("");
+    setLogoUrl(null);
+  }, []);
+
   const openCreate = () => {
     setEditing(null);
     setName("");
+    setLogoUrl(null);
     setActive(true);
     setOpen(true);
   };
@@ -36,6 +47,7 @@ export default function AdminMarcasPage() {
   const openEdit = (b: Brand) => {
     setEditing(b);
     setName(b.name);
+    setLogoUrl(b.logoUrl);
     setActive(b.active);
     setOpen(true);
   };
@@ -44,13 +56,15 @@ export default function AdminMarcasPage() {
     e.preventDefault();
     try {
       if (editing) {
-        await updateBrand(editing.id, { name: name.trim(), active });
+        await updateBrand(editing.id, {
+          name: name.trim(),
+          active,
+          logoUrl,
+        });
       } else {
-        await addBrand(name.trim());
+        await addBrand({ name: name.trim(), logoUrl });
       }
-      setOpen(false);
-      setEditing(null);
-      setName("");
+      closeForm();
     } catch (err) {
       void notice({
         title: "No se pudo guardar",
@@ -83,15 +97,15 @@ export default function AdminMarcasPage() {
         className={`${inputClass} mb-5 max-w-md`}
       />
 
-      {open && (
-        <form
-          onSubmit={onSave}
-          className="mb-6 rounded-xl border border-border bg-surface p-5"
-        >
-          <div className="mb-4 text-sm font-bold">
-            {editing ? "Editar marca" : "Nueva marca"}
-          </div>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+      <AdminFormModal
+        open={open}
+        title={editing ? "Editar marca" : "Nueva marca"}
+        onClose={closeForm}
+        onSubmit={onSave}
+        maxWidth="2xl"
+      >
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="space-y-3">
             <input
               className={inputClass}
               placeholder="Nombre"
@@ -110,26 +124,34 @@ export default function AdminMarcasPage() {
               </label>
             )}
           </div>
-          <div className="mt-4 flex gap-2">
-            <button
-              type="submit"
-              className="cursor-pointer rounded-lg border-none bg-primary px-4 py-2.5 text-sm font-bold !text-white"
-            >
-              Guardar
-            </button>
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              className="cursor-pointer rounded-lg border border-border bg-transparent px-4 py-2.5 text-sm font-semibold"
-            >
-              Cancelar
-            </button>
-          </div>
-        </form>
-      )}
+          <ImageUploader
+            value={logoUrl}
+            onChange={setLogoUrl}
+            folder="brands"
+            label="Logo de la marca"
+            fit="contain"
+          />
+        </div>
+        <div className="mt-4 flex gap-2">
+          <button
+            type="submit"
+            className="cursor-pointer rounded-lg border-none bg-primary px-4 py-2.5 text-sm font-bold !text-white"
+          >
+            Guardar
+          </button>
+          <button
+            type="button"
+            onClick={closeForm}
+            className="cursor-pointer rounded-lg border border-border bg-transparent px-4 py-2.5 text-sm font-semibold"
+          >
+            Cancelar
+          </button>
+        </div>
+      </AdminFormModal>
 
       <div className="overflow-hidden rounded-xl border border-border bg-surface">
-        <div className="hidden grid-cols-[1fr_100px_140px] gap-3 bg-primary-softer px-4 py-3 text-xs font-bold text-muted uppercase md:grid">
+        <div className="hidden grid-cols-[64px_1fr_100px_140px] gap-3 bg-primary-softer px-4 py-3 text-xs font-bold text-muted uppercase md:grid">
+          <div>Logo</div>
           <div>Marca</div>
           <div>Estado</div>
           <div className="text-right">Acciones</div>
@@ -137,19 +159,35 @@ export default function AdminMarcasPage() {
         {filtered.map((b) => (
           <div
             key={b.id}
-            className="grid grid-cols-1 gap-2 border-t border-border-soft px-4 py-3 text-sm md:grid-cols-[1fr_100px_140px] md:items-center md:gap-3"
+            className="grid grid-cols-1 gap-2 border-t border-border-soft px-4 py-3 text-sm md:grid-cols-[64px_1fr_100px_140px] md:items-center md:gap-3"
           >
+            <div className="flex items-center">
+              {b.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={b.logoUrl}
+                  alt=""
+                  className="h-12 w-12 rounded-lg border border-border-soft bg-white object-contain p-1"
+                />
+              ) : (
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-dashed border-border text-[11px] font-bold text-muted-soft">
+                  —
+                </div>
+              )}
+            </div>
             <div className="font-semibold">{b.name}</div>
             <div className={b.active ? "text-success" : "text-sale"}>
               {b.active ? "Activa" : "Inactiva"}
             </div>
-            <div className="flex gap-2 md:justify-end">
+            <div className="flex gap-1.5 md:justify-end">
               <button
                 type="button"
                 onClick={() => openEdit(b)}
-                className="cursor-pointer rounded-md border border-border px-2.5 py-1.5 text-[12.5px] font-semibold"
+                aria-label={`Editar ${b.name}`}
+                title="Editar"
+                className="inline-flex size-8 cursor-pointer items-center justify-center rounded-lg border border-border bg-surface text-foreground hover:bg-accent-soft"
               >
-                Editar
+                <EditIcon />
               </button>
               <button
                 type="button"
@@ -173,9 +211,11 @@ export default function AdminMarcasPage() {
                     }
                   })();
                 }}
-                className="cursor-pointer rounded-md border-none bg-transparent px-2.5 py-1.5 text-[12.5px] font-semibold text-sale"
+                aria-label={`Eliminar ${b.name}`}
+                title="Eliminar"
+                className="inline-flex size-8 cursor-pointer items-center justify-center rounded-lg border border-border bg-surface text-sale hover:bg-danger-soft"
               >
-                Borrar
+                <TrashIcon />
               </button>
             </div>
           </div>
@@ -187,5 +227,40 @@ export default function AdminMarcasPage() {
         )}
       </div>
     </div>
+  );
+}
+
+function iconProps() {
+  return {
+    width: 15,
+    height: 15,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 2,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    "aria-hidden": true as const,
+  };
+}
+
+function EditIcon() {
+  return (
+    <svg {...iconProps()}>
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+    </svg>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg {...iconProps()}>
+      <path d="M3 6h18" />
+      <path d="M8 6V4h8v2" />
+      <path d="M19 6l-1 14H6L5 6" />
+      <path d="M10 11v6" />
+      <path d="M14 11v6" />
+    </svg>
   );
 }

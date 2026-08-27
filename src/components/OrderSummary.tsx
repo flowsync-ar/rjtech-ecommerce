@@ -21,9 +21,11 @@ export function OrderSummary({ title = "Resumen", action }: Props) {
         <span>Subtotal</span>
         <span>{formatPrice(subtotal)}</span>
       </div>
-      <div className="mb-3.5 flex justify-between text-sm text-body-text">
+      <div className="mb-3.5 flex justify-between gap-3 text-sm text-body-text">
         <span>Envío</span>
-        <span>{shipping === 0 ? "Gratis" : formatPrice(shipping)}</span>
+        <span className="text-right text-muted">
+          {shipping === 0 ? "A cargo del comprador" : formatPrice(shipping)}
+        </span>
       </div>
       <div className="mb-3.5 h-px bg-border" />
       <div className={`flex justify-between text-[17px] font-bold ${action ? "mb-5" : ""}`}>

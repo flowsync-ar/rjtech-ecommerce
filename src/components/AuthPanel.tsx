@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { PasswordInput } from "@/components/PasswordInput";
+import { safeNextPath } from "@/lib/auth-redirect";
 import { useAuthStore } from "@/store/auth-store";
 
 type Mode = "login" | "register";
@@ -10,6 +12,9 @@ const inputClass =
   "w-full rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm text-foreground outline-none placeholder:text-muted-soft focus:border-primary";
 
 export function AuthPanel() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnTo = safeNextPath(searchParams.get("next"));
   const login = useAuthStore((s) => s.login);
   const register = useAuthStore((s) => s.register);
   const loginWithGoogle = useAuthStore((s) => s.loginWithGoogle);
@@ -21,6 +26,10 @@ export function AuthPanel() {
   const [error, setError] = useState<string | null>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
 
+  const goAfterAuth = () => {
+    if (returnTo) router.replace(returnTo);
+  };
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -30,21 +39,24 @@ export function AuthPanel() {
         ? await login(email, password)
         : await register(name, email, password);
 
-    if (!result.ok) setError(result.error);
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+    goAfterAuth();
   };
 
   const onGoogle = async () => {
     setError(null);
     setGoogleLoading(true);
     try {
-      await loginWithGoogle();
+      await loginWithGoogle(returnTo ?? "/cuenta");
     } catch (err) {
       setError(
         err instanceof Error
           ? err.message
           : "No se pudo iniciar sesión con Google.",
       );
-    } finally {
       setGoogleLoading(false);
     }
   };
@@ -53,7 +65,9 @@ export function AuthPanel() {
     <div className="mx-auto w-full max-w-[440px] pb-[60px]">
       <h1 className="m-0 pt-7 pb-2 text-2xl font-bold">Mi cuenta</h1>
       <p className="mb-7 text-sm text-muted">
-        Iniciá sesión para ver tus pedidos, o creá una cuenta nueva.
+        {returnTo === "/checkout"
+          ? "Iniciá sesión para confirmar tu compra. Tus datos de envío y pago se mantienen."
+          : "Iniciá sesión para ver tus pedidos, o creá una cuenta nueva."}
       </p>
 
       <div className="rounded-xl border border-border bg-surface p-6 md:p-7">

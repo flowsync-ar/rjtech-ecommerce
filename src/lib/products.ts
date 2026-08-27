@@ -502,7 +502,11 @@ export type SortOption =
   | "price_asc"
   | "price_desc"
   | "name_asc"
-  | "name_desc";
+  | "name_desc"
+  | "category_asc"
+  | "category_desc"
+  | "brand_asc"
+  | "brand_desc";
 
 export type ProductFilters = {
   category?: CategoryId | "all";
@@ -551,16 +555,21 @@ export function productMatchesQuery(product: Product, query: string) {
   const q = query.trim().toLowerCase();
   if (!q) return true;
   const tags = product.tags ?? [];
+  const colors = product.colors ?? [];
   const haystack = [
     product.name,
     product.brand,
     product.description,
     categoryLabels[product.category],
+    product.ram,
+    product.storage,
     ...tags,
+    ...colors,
   ]
     .join(" ")
     .toLowerCase();
-  return haystack.includes(q);
+  const tokens = q.split(/\s+/).filter(Boolean);
+  return tokens.every((token) => haystack.includes(token));
 }
 
 export function filterProducts(
@@ -580,7 +589,8 @@ export function filterProducts(
 
   let filtered = list.filter((p) => {
     if (category !== "all" && p.category !== category) return false;
-    if (brand !== "all" && p.brand !== brand) return false;
+    if (brand !== "all" && p.brand.toLowerCase() !== brand.toLowerCase())
+      return false;
     if (minPrice != null && p.price < minPrice) return false;
     if (maxPrice != null && p.price > maxPrice) return false;
     if (q && !productMatchesQuery(p, q)) {
@@ -596,6 +606,24 @@ export function filterProducts(
     filtered.sort((a, b) => a.name.localeCompare(b.name, "es"));
   if (sort === "name_desc")
     filtered.sort((a, b) => b.name.localeCompare(a.name, "es"));
+  if (sort === "category_asc" || sort === "category_desc") {
+    const dir = sort === "category_asc" ? 1 : -1;
+    filtered.sort((a, b) => {
+      const la = categoryLabels[a.category] ?? a.category;
+      const lb = categoryLabels[b.category] ?? b.category;
+      const byCat = la.localeCompare(lb, "es") * dir;
+      if (byCat !== 0) return byCat;
+      return a.name.localeCompare(b.name, "es");
+    });
+  }
+  if (sort === "brand_asc" || sort === "brand_desc") {
+    const dir = sort === "brand_asc" ? 1 : -1;
+    filtered.sort((a, b) => {
+      const byBrand = a.brand.localeCompare(b.brand, "es") * dir;
+      if (byBrand !== 0) return byBrand;
+      return a.name.localeCompare(b.name, "es");
+    });
+  }
   if (sort === "relevance")
     filtered.sort((a, b) => b.rating * b.reviews - a.rating * a.reviews);
 

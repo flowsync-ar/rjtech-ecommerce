@@ -10,6 +10,7 @@ type Props = {
   folder?: string;
   label?: string;
   className?: string;
+  fit?: "cover" | "contain";
 };
 
 export function ImageUploader({
@@ -18,6 +19,7 @@ export function ImageUploader({
   folder = "products",
   label = "Imagen (se convierte a WebP)",
   className = "",
+  fit = "cover",
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -62,7 +64,7 @@ export function ImageUploader({
           onClick={openPicker}
           disabled={uploading}
           aria-label={value ? "Cambiar imagen" : "Subir imagen"}
-          className="stripe-bg group relative h-36 w-36 shrink-0 cursor-pointer overflow-hidden rounded-lg border border-dashed border-border bg-accent-soft text-left outline-none transition-colors hover:border-primary hover:bg-primary-softer focus-visible:border-primary disabled:cursor-wait disabled:opacity-70 sm:h-40 sm:w-40"
+          className="group relative h-36 w-36 shrink-0 cursor-pointer overflow-hidden rounded-lg border border-dashed border-border bg-white text-left outline-none transition-colors hover:border-primary focus-visible:border-primary disabled:cursor-wait disabled:opacity-70 sm:h-40 sm:w-40"
         >
           {value ? (
             <>
@@ -71,8 +73,13 @@ export function ImageUploader({
                 alt="Vista previa"
                 fill
                 sizes="160px"
-                className="h-full w-full object-cover object-center"
-                style={{ objectFit: "cover", objectPosition: "center" }}
+                className={`h-full w-full object-center ${
+                  fit === "contain" ? "object-contain p-3" : "object-cover"
+                }`}
+                style={{
+                  objectFit: fit,
+                  objectPosition: "center",
+                }}
               />
               <span className="absolute inset-x-0 bottom-0 bg-foreground/70 px-2 py-1.5 text-center text-[11px] font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100">
                 Cambiar

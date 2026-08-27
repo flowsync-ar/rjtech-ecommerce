@@ -7,6 +7,7 @@ export type Brand = {
   id: string;
   name: string;
   active: boolean;
+  logoUrl: string | null;
 };
 
 type BrandsState = {
@@ -14,10 +15,13 @@ type BrandsState = {
   loading: boolean;
   hydrated: boolean;
   fetchBrands: () => Promise<void>;
-  addBrand: (name: string) => Promise<Brand>;
+  addBrand: (input: {
+    name: string;
+    logoUrl?: string | null;
+  }) => Promise<Brand>;
   updateBrand: (
     id: string,
-    input: { name?: string; active?: boolean },
+    input: { name?: string; active?: boolean; logoUrl?: string | null },
   ) => Promise<void>;
   deleteBrand: (id: string) => Promise<void>;
   ensureBrand: (name: string) => Promise<Brand>;
@@ -27,11 +31,13 @@ function mapBrand(row: {
   id: string;
   name: string;
   active: boolean | null;
+  logo_url?: string | null;
 }): Brand {
   return {
     id: row.id,
     name: row.name,
     active: row.active ?? true,
+    logoUrl: row.logo_url ?? null,
   };
 }
 
@@ -58,8 +64,8 @@ export const useBrandsStore = create<BrandsState>((set, get) => ({
       hydrated: true,
     });
   },
-  addBrand: async (name) => {
-    const trimmed = name.trim();
+  addBrand: async (input) => {
+    const trimmed = input.name.trim();
     if (!trimmed) throw new Error("El nombre de la marca es obligatorio");
     const supabase = createClient();
     const {
@@ -75,7 +81,22 @@ export const useBrandsStore = create<BrandsState>((set, get) => ({
     if (error) throw new Error(error.message);
     const row = Array.isArray(data) ? data[0] : data;
     if (!row) throw new Error("Error al crear marca");
-    const brand = mapBrand(row);
+    let brand = mapBrand(row);
+
+    if (input.logoUrl) {
+      const { data: updated, error: upErr } = await supabase
+        .from("rjtech_brands")
+        .update({
+          logo_url: input.logoUrl,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", brand.id)
+        .select("*")
+        .single();
+      if (upErr || !updated) throw new Error(upErr?.message ?? "Error al guardar logo");
+      brand = mapBrand(updated);
+    }
+
     set((s) => {
       if (s.brands.some((b) => b.id === brand.id)) {
         return {
@@ -100,6 +121,7 @@ export const useBrandsStore = create<BrandsState>((set, get) => ({
     };
     if (input.name != null) patch.name = input.name.trim();
     if (input.active != null) patch.active = input.active;
+    if (input.logoUrl !== undefined) patch.logo_url = input.logoUrl;
 
     const { data, error } = await supabase
       .from("rjtech_brands")
@@ -141,6 +163,6 @@ export const useBrandsStore = create<BrandsState>((set, get) => ({
       (b) => b.name.toLowerCase() === trimmed.toLowerCase(),
     );
     if (existing) return existing;
-    return get().addBrand(trimmed);
+    return get().addBrand({ name: trimmed });
   },
 }));

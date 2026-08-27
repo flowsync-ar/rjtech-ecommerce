@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AdminFormModal } from "@/components/admin/AdminFormModal";
 import { BulkProductImport } from "@/components/admin/BulkProductImport";
 import { ProductImageAssign } from "@/components/admin/ProductImageAssign";
 import { SupplierPriceUpdate } from "@/components/admin/SupplierPriceUpdate";
@@ -34,7 +35,7 @@ const inputClass =
   "w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary";
 
 const TABLE_COLS =
-  "md:grid-cols-[40px_64px_minmax(140px,1.5fr)_100px_118px_100px_70px_96px_108px]";
+  "md:grid-cols-[40px_64px_minmax(140px,1.5fr)_100px_118px_100px_70px_96px_120px]";
 
 const costInputClass =
   "w-full rounded-lg border border-border bg-background px-2.5 py-1.5 text-[13px] font-semibold tabular-nums text-foreground outline-none focus:border-primary";
@@ -118,6 +119,7 @@ export default function AdminProductosPage() {
   const [bulkBrand, setBulkBrand] = useState("");
   const [bulkTags, setBulkTags] = useState<string[]>([]);
   const [bulkMenuOpen, setBulkMenuOpen] = useState(false);
+  const formPanelRef = useRef<HTMLFormElement>(null);
   const [bulkPanel, setBulkPanel] = useState<
     null | "tags" | "category" | "brand"
   >(null);
@@ -275,6 +277,14 @@ export default function AdminProductosPage() {
     };
   }, [bulkMenuOpen]);
 
+  useEffect(() => {
+    if (panel !== "form") return;
+    const id = window.requestAnimationFrame(() => {
+      formPanelRef.current?.scrollIntoView({ block: "nearest" });
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [panel, editing?.id]);
+
   const runBulk = async (fn: () => Promise<void>) => {
     setBulkBusy(true);
     try {
@@ -307,6 +317,11 @@ export default function AdminProductosPage() {
     }
     return base;
   }, [form.installments]);
+
+  const closeForm = useCallback(() => {
+    setPanel("none");
+    setEditing(null);
+  }, []);
 
   const openCreate = () => {
     setEditing(null);
@@ -484,13 +499,14 @@ export default function AdminProductosPage() {
       )}
 
       {panel === "form" && (
-        <form
+        <AdminFormModal
+          open
+          title={editing ? `Editar #${editing.id}` : "Nuevo producto"}
+          onClose={closeForm}
           onSubmit={onSave}
-          className="mb-6 rounded-xl border border-border bg-surface p-5"
+          formRef={formPanelRef}
+          maxWidth="3xl"
         >
-          <div className="mb-4 text-sm font-bold">
-            {editing ? `Editar #${editing.id}` : "Nuevo producto"}
-          </div>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <input
               className={inputClass}
@@ -699,13 +715,13 @@ export default function AdminProductosPage() {
             </button>
             <button
               type="button"
-              onClick={() => setPanel("none")}
+              onClick={closeForm}
               className="cursor-pointer rounded-lg border border-border bg-transparent px-4 py-2.5 text-sm font-semibold"
             >
               Cancelar
             </button>
           </div>
-        </form>
+        </AdminFormModal>
       )}
 
       <div className="overflow-hidden rounded-xl border border-border bg-surface">
