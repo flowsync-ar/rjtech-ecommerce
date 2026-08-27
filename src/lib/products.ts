@@ -78,7 +78,7 @@ export const products: Product[] = [
     stock: 12,
     rating: 4.8,
     reviews: 156,
-    installments: "Hasta 12 cuotas sin interés",
+    installments: "Pagar en Cuotas",
     description:
       "Chip M3 con CPU de 8 núcleos, pantalla Liquid Retina de 15\", hasta 18 horas de batería. Ideal para trabajo y estudio todo el día.",
   },
@@ -128,7 +128,7 @@ export const products: Product[] = [
     stock: 8,
     rating: 4.7,
     reviews: 302,
-    installments: "Hasta 12 cuotas sin interés",
+    installments: "Pagar en Cuotas",
     description:
       "Estructura de titanio, chip A17 Pro y sistema de cámaras profesional con teleobjetivo 3x.",
   },
@@ -153,7 +153,7 @@ export const products: Product[] = [
     stock: 34,
     rating: 4.5,
     reviews: 512,
-    installments: "Hasta 12 cuotas sin interés",
+    installments: "Pagar en Cuotas",
     description:
       "Pantalla AMOLED 120Hz, cámara principal de 200MP y carga rápida de 67W. Gran relación precio-calidad.",
   },
@@ -228,7 +228,7 @@ export const products: Product[] = [
     stock: 14,
     rating: 4.3,
     reviews: 97,
-    installments: "Hasta 12 cuotas sin interés",
+    installments: "Pagar en Cuotas",
     description:
       "Pantalla Full HD de 15.6\", procesador de última generación y 16GB de RAM para estudio y trabajo.",
   },
@@ -253,7 +253,7 @@ export const products: Product[] = [
     stock: 7,
     rating: 4.8,
     reviews: 221,
-    installments: "Hasta 12 cuotas sin interés",
+    installments: "Pagar en Cuotas",
     description:
       "SSD ultrarrápido, gráficos 4K y DualSense incluido. Ideal para la nueva generación de juegos.",
   },
@@ -328,7 +328,7 @@ export const products: Product[] = [
     stock: 11,
     rating: 4.5,
     reviews: 210,
-    installments: "Hasta 12 cuotas sin interés",
+    installments: "Pagar en Cuotas",
     description:
       "Panel 4K con HDR, sistema operativo con apps de streaming integradas y control por voz.",
   },

@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { ColorSwatches } from "@/components/ColorSwatches";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductGallery } from "@/components/ProductGallery";
 import { QuantitySelector } from "@/components/QuantitySelector";
-import { ColorSwatches } from "@/components/ColorSwatches";
+import { ShareButton } from "@/components/ShareButton";
 import { productMeta, starsFor } from "@/lib/format";
 import {
   getRelatedProducts,
@@ -204,7 +205,7 @@ export default function ProductoPage() {
                   </div>
                 )}
               </div>
-              <div className="mb-3.5 flex flex-wrap gap-3">
+              <div className="mb-3.5 flex flex-wrap items-center gap-3">
                 <button
                   type="button"
                   onClick={onAddToCart}
@@ -219,17 +220,23 @@ export default function ProductoPage() {
                 >
                   Comprar ahora
                 </button>
+                <ShareButton title={product.name} className="shrink-0" />
               </div>
             </>
           ) : (
-            product.colors?.length > 0 && (
-              <div className="mb-4 flex flex-nowrap items-center gap-2.5">
-                <span className="shrink-0 text-[11px] font-bold tracking-wide text-muted uppercase">
-                  Colores
-                </span>
-                <ColorSwatches colors={product.colors} size="md" showLabels />
+            <>
+              {product.colors?.length > 0 && (
+                <div className="mb-4 flex flex-nowrap items-center gap-2.5">
+                  <span className="shrink-0 text-[11px] font-bold tracking-wide text-muted uppercase">
+                    Colores
+                  </span>
+                  <ColorSwatches colors={product.colors} size="md" showLabels />
+                </div>
+              )}
+              <div className="mb-3.5">
+                <ShareButton title={product.name} />
               </div>
-            )
+            </>
           )}
           <div className="text-[12.5px] text-muted">
             Envío a todo el país · Garantía oficial 12 meses

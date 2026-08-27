@@ -1,28 +1,38 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { usePathname } from "next/navigation";
 import { whatsappHref } from "@/lib/social";
 import { useStoreConfig } from "@/store/store-config";
 
 const PREFILL =
-  "Hola! Vi la web de RJ Tech y quiero hacer una consulta 🙂";
+  "Hola! estoy en la web de RJ Tech y quiero hacer una consulta 🙂";
 
 export function WhatsAppFloat() {
+  const pathname = usePathname();
   const phone = useStoreConfig((s) => s.config.supportPhone);
   const href = whatsappHref(phone, PREFILL);
+  const [mounted, setMounted] = useState(false);
 
-  return (
+  useEffect(() => setMounted(true), []);
+
+  // En /contacto ya hay una card de WhatsApp; no duplicar el flotante.
+  if (!mounted || pathname?.startsWith("/contacto")) return null;
+
+  return createPortal(
     <a
       href={href}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Escribinos por WhatsApp"
-      className="wa-float group fixed right-4 bottom-5 z-40 flex items-center gap-0 no-underline md:right-6 md:bottom-7 hover:!no-underline"
+      className="wa-float-btn group fixed z-40 flex items-center justify-end no-underline hover:!no-underline"
     >
-      <span className="wa-float-label pointer-events-none mr-0 max-w-0 overflow-hidden whitespace-nowrap rounded-full bg-[#075e54] px-0 py-2.5 text-[13px] font-semibold text-white opacity-0 shadow-lg transition-all duration-300 ease-out group-hover:mr-3 group-hover:max-w-[220px] group-hover:px-4 group-hover:opacity-100">
+      <span className="pointer-events-none mr-0 max-w-0 overflow-hidden whitespace-nowrap rounded-full bg-[#26D366] px-0 py-2.5 text-[13px] font-semibold text-white opacity-0 shadow-lg transition-[max-width,margin,padding,opacity] duration-300 ease-out group-hover:mr-3 group-hover:max-w-[220px] group-hover:px-4 group-hover:opacity-100">
         ¿Necesitás ayuda? Escribinos
       </span>
 
-      <span className="relative inline-flex size-[58px] items-center justify-center">
+      <span className="relative inline-flex size-[58px] shrink-0 items-center justify-center">
         <span
           className="wa-float-ring absolute inset-0 rounded-full bg-[#25d366]"
           aria-hidden="true"
@@ -35,7 +45,8 @@ export function WhatsAppFloat() {
           <WhatsAppIcon />
         </span>
       </span>
-    </a>
+    </a>,
+    document.body,
   );
 }
 

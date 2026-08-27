@@ -5,17 +5,17 @@ const SOCIAL_LINKS = [
   {
     id: "instagram",
     label: "Instagram",
-    href: "https://www.instagram.com/rjtech",
+    href: "https://www.instagram.com/rjtech.lp",
   },
   {
     id: "facebook",
     label: "Facebook",
-    href: "https://www.facebook.com/rjtech",
+    href: "https://www.facebook.com/rjtech.lp",
   },
   {
     id: "tiktok",
     label: "TikTok",
-    href: "https://www.tiktok.com/@rjtech",
+    href: "https://www.tiktok.com/@rjtech.lp",
   },
   {
     id: "whatsapp",
@@ -29,9 +29,9 @@ export function Footer() {
     <footer className="mt-5 border-t border-border bg-surface">
       <div className="mx-auto grid max-w-[1280px] grid-cols-2 gap-8 px-6 py-10 md:grid-cols-4 md:px-10">
         <div>
-          <div className="mb-2.5 text-[12.5px] font-bold">Seguinos</div>
+          <div className="mb-2.5 text-[12.5px] font-bold">Redes Sociales</div>
           <p className="mb-3 max-w-[220px] text-[13px] leading-relaxed text-muted">
-            MacBooks, celulares, drones y más — con precios claros y stock real.
+          Seguinos en nuestras redes sociales y mantenete al tanto de los últimos ingresos, novedades, promociones y lanzamientos de RJ Tech.
           </p>
           <div className="flex flex-wrap gap-2">
             {SOCIAL_LINKS.map((social) => (

@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { DialogProvider } from "@/components/DialogProvider";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { SupabaseBootstrap } from "@/components/SupabaseBootstrap";
+import { ThemeFavicon } from "@/components/ThemeFavicon";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import "./globals.css";
 
@@ -22,9 +23,18 @@ export const metadata: Metadata = {
     "MacBooks, iPhone, Xiaomi, Motorola, drones, TVs y más. Stock real, precios claros y cuotas.",
   icons: {
     icon: [
-      { url: "/favicon/favicon.ico", sizes: "any" },
-      { url: "/favicon/favicon-96x96.png", type: "image/png", sizes: "96x96" },
-      { url: "/favicon/favicon.svg", type: "image/svg+xml" },
+      // Default plateado: Incógnito / pestañas oscuras aunque el OS esté en light
+      { url: "/favicon-dark.png", type: "image/png" },
+      {
+        url: "/favicon-light.png",
+        type: "image/png",
+        media: "(prefers-color-scheme: light)",
+      },
+      {
+        url: "/favicon-dark.png",
+        type: "image/png",
+        media: "(prefers-color-scheme: dark)",
+      },
     ],
     apple: [{ url: "/favicon/apple-touch-icon.png", sizes: "180x180" }],
   },
@@ -44,6 +54,7 @@ export default function RootLayout({
     >
       <body className="min-h-full bg-background text-foreground">
         <ThemeProvider>
+          <ThemeFavicon />
           <DialogProvider>
             <SupabaseBootstrap />
             <ScrollToTop />

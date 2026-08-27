@@ -87,6 +87,8 @@ body {
 
 html {
   scroll-behavior: smooth;
+  scrollbar-gutter: stable;
+  overflow-x: clip;
 }
 
 ::selection {
@@ -176,27 +178,26 @@ a:hover {
   }
 }
 
-@keyframes wa-float-in {
-  from {
-    opacity: 0;
-    transform: translateY(16px) scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.wa-float {
-  animation: wa-float-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.4s both;
-}
-
 .wa-float-ring {
   animation: wa-float-pulse 2.4s ease-out infinite;
 }
 
 .wa-float-ring-delay {
   animation-delay: 1.2s;
+}
+
+/* Anclado al viewport: sin transform en el contenedor (evita saltos al navegar) */
+.wa-float-btn {
+  transform: none !important;
+  right: max(1rem, env(safe-area-inset-right, 0px));
+  bottom: max(1.25rem, env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 768px) {
+  .wa-float-btn {
+    right: max(1.5rem, env(safe-area-inset-right, 0px));
+    bottom: max(1.75rem, env(safe-area-inset-bottom, 0px));
+  }
 }
 
 /* Dual price range thumbs */
@@ -241,7 +242,6 @@ a:hover {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .wa-float,
   .wa-float-ring,
   .wa-float-ring-delay {
     animation: none;

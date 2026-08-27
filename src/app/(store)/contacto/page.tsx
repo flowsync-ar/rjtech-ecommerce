@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ContactForm } from "./ContactForm";
+import { ContactWhatsAppCard } from "./ContactWhatsAppCard";
 
 export const metadata: Metadata = {
   title: "Contacto — RJ Tech",
@@ -30,17 +31,9 @@ export default function ContactoPage() {
             <span className="font-semibold text-foreground">
               rjtech.lp@gmail.com
             </span>
-            . Si preferís chat, también estamos por WhatsApp.
+            . Si preferís chat, escribinos por WhatsApp.
           </p>
-          <div className="rounded-xl border border-border bg-surface px-5 py-4">
-            <div className="mb-1 text-[11px] font-bold tracking-wider text-muted uppercase">
-              Base
-            </div>
-            <div className="font-semibold text-foreground">
-              Santa Rosa, La Pampa
-            </div>
-            <div className="mt-1 text-[13px] text-muted">Envíos a todo el país</div>
-          </div>
+          <ContactWhatsAppCard />
         </div>
 
         <ContactForm />
