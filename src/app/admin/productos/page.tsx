@@ -698,12 +698,11 @@ export default function AdminProductosPage() {
 
             <textarea
               className={`${inputClass} min-h-[90px] md:col-span-2`}
-              placeholder="Descripción"
+              placeholder="Descripción (opcional)"
               value={form.description}
               onChange={(e) =>
                 setForm({ ...form, description: e.target.value })
               }
-              required
             />
           </div>
           <div className="mt-4 flex gap-2">

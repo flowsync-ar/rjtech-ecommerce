@@ -58,12 +58,11 @@ export function Footer() {
             >
               Contacto
             </a>
-            <span>Envíos</span>
             <a
-              href="/admin"
+              href="/envios"
               className="text-muted no-underline hover:text-primary hover:!no-underline"
             >
-              Admin
+              Envíos
             </a>
           </div>
         </div>
@@ -82,15 +81,15 @@ export function Footer() {
             >
               Marcas
             </a>
-            <span>Trabajá con nosotros</span>
           </div>
         </div>
         <div>
           <div className="mb-2.5 text-[12.5px] font-bold">Pagos</div>
           <div className="flex flex-col gap-2 text-[13px] text-muted">
-            <span>Tarjetas</span>
-            <span>Cuotas sin interés</span>
-            <span>Transferencia</span>
+            <span>Tarjetas de Crédito</span>
+            <span>Mercado Pago</span>
+            <span>Getnet</span>
+            <span>Transferencia Bancaria</span>
           </div>
         </div>
       </div>
